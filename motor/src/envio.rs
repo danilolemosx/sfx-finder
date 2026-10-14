@@ -91,6 +91,7 @@ pub fn enviar(ferr: &Ferramentas, item: &ItemCesta, envio: &Envio, progresso: &m
                         .args(["-hide_banner", "-nostdin", "-v", "error", "-ss", &format!("{a:.6}"), "-t", &format!("{:.6}", (b - a).max(0.01)), "-i"])
                         .arg(entrada)
                         .args(["-map", "0:a:0", "-c:a", &mesmo, "-map_metadata", "-1"])
+                        .args(if ext.eq_ignore_ascii_case("bwf") { &["-f", "wav"][..] } else { &[][..] })
                         .arg(&destino)
                         .output()
                         .context("não foi possível rodar o ffmpeg")?;
@@ -173,7 +174,7 @@ pub fn picos(ferr: &Ferramentas, caminho: &Path, n: usize) -> Result<Vec<u8>> {
     let mut filho = comando(&ferr.ffmpeg)
         .args(["-hide_banner", "-nostdin", "-v", "error", "-t", "900", "-i"])
         .arg(caminho)
-        .args(["-map", "0:a:0", "-ac", "1", "-ar", "2000", "-f", "s16le", "-"])
+        .args(["-map", "0:a:0", "-ac", "1", "-ar", "2000", "-c:a", "pcm_s16le", "-f", "wav", "-"])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
@@ -181,7 +182,9 @@ pub fn picos(ferr: &Ferramentas, caminho: &Path, n: usize) -> Result<Vec<u8>> {
     let mut bruto = Vec::new();
     filho.stdout.take().unwrap().read_to_end(&mut bruto)?;
     filho.wait()?;
-    let amostras: Vec<f32> = bruto.chunks_exact(2).map(|b| (i16::from_le_bytes([b[0], b[1]]) as f32 / 32768.0).abs()).collect();
+    // WAV pelo cano: as amostras começam depois do bloco "data" (o ffmpeg do app não tem a saída crua s16le)
+    let inicio = bruto.windows(4).take(4096).position(|w| w == b"data").map(|p| p + 8).unwrap_or(bruto.len());
+    let amostras: Vec<f32> = bruto[inicio..].chunks_exact(2).map(|b| (i16::from_le_bytes([b[0], b[1]]) as f32 / 32768.0).abs()).collect();
     if amostras.is_empty() {
         bail!("não foi possível ler o áudio");
     }
