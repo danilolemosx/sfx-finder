@@ -1,0 +1,72 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face { font-family: "Archivo"; src: url("../../ui/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+:root { --fundo: #2e2d2b; --papel: #efe5cf; --tinta: #34312d; --verm: #d2382f; }
+html,body{margin:0;background:transparent}
+body.folha{background:#1b1a19;width:1500px;height:760px;font-family:"Archivo";color:#efe5cf}
+.ic{position:relative;width:1024px;height:1024px}
+.fundo{position:absolute;left:100px;top:100px;width:824px;height:824px;border-radius:185px;background:var(--fundo);overflow:hidden;box-shadow:inset 0 0 0 6px #3a3835}
+
+/* A: bilhete com SFX e onda */
+.a .bilhete{position:absolute;left:150px;top:150px;width:524px;height:524px;border-radius:44px;background:var(--papel)}
+.a .bilhete::after{content:"";position:absolute;right:-20px;top:0;bottom:0;width:40px;background:radial-gradient(circle at 20px 20px,var(--fundo) 13px,transparent 14px) 0 4px/40px 40px repeat-y}
+.a .txt{position:absolute;left:44px;top:84px;font:900 176px/1 "Archivo";font-stretch:125%;color:var(--tinta);letter-spacing:-4px}
+.a .onda{position:absolute;left:50px;right:70px;top:320px;height:150px;display:flex;align-items:center;gap:9px}
+.a .onda i{flex:1;background:var(--tinta);border-radius:6px}
+.a .onda i.v{background:var(--verm)}
+
+/* B: lupa com a onda dentro */
+.b .lente{position:absolute;left:150px;top:140px;width:420px;height:420px;border-radius:50%;background:var(--papel);box-shadow:0 0 0 46px var(--papel) inset, 0 0 0 0 transparent}
+.b .vidro{position:absolute;left:196px;top:186px;width:328px;height:328px;border-radius:50%;background:var(--fundo);display:flex;align-items:center;justify-content:center;gap:12px;overflow:hidden}
+.b .vidro i{width:22px;background:var(--verm);border-radius:11px}
+.b .cabo{position:absolute;left:470px;top:470px;width:110px;height:330px;background:var(--papel);border-radius:55px;transform:rotate(-45deg);transform-origin:55px 0}
+
+/* C: bilhete com barras e uma vermelha “achada” */
+.c .bilhete{position:absolute;left:150px;top:150px;width:524px;height:524px;border-radius:44px;background:var(--papel)}
+.c .bilhete::after{content:"";position:absolute;right:-20px;top:0;bottom:0;width:40px;background:radial-gradient(circle at 20px 20px,var(--fundo) 13px,transparent 14px) 0 4px/40px 40px repeat-y}
+.c .barras{position:absolute;left:58px;right:76px;top:60px;bottom:60px;display:flex;align-items:center;gap:16px}
+.c .barras i{flex:1;background:var(--tinta);border-radius:10px;opacity:.9}
+.c .barras i.v{background:var(--verm);opacity:1}
+.c .anel{position:absolute;border:26px solid var(--verm);border-radius:50%;width:150px;height:150px;left:208px;top:-6px}
+
+.folha .linha{display:flex;gap:70px;padding:60px 80px 0;align-items:flex-start}
+.folha .op{display:flex;flex-direction:column;align-items:center;gap:22px}
+.folha .op .grande{width:380px;height:380px;overflow:hidden}
+.folha .op .grande .ic{transform:scale(.371);transform-origin:0 0}
+.folha .peq{display:flex;gap:24px;align-items:flex-end}
+.folha .peq div{overflow:hidden}
+.folha .letra{font:900 54px/1 "Archivo";font-stretch:125%;color:#d2382f}
+.folha .nome{font:700 13px/1 "Archivo";letter-spacing:2px;text-transform:uppercase;color:#9a9286}
+</style></head><body>
+<template id="A"><div class="ic a"><div class="fundo"><div class="bilhete"><div class="txt">SFX</div><div class="onda"></div></div></div></div></template>
+<template id="B"><div class="ic b"><div class="fundo"><div class="cabo"></div><div class="lente"></div><div class="vidro"></div></div></div></template>
+<template id="C"><div class="ic c"><div class="fundo"><div class="bilhete"><div class="barras"></div></div></div></div></template>
+<script>
+const op = new URLSearchParams(location.search).get("op");
+const altA = [30,55,80,100,70,45,60,85,50,30,20,14];
+const altB = [20,40,70,95,60,85,45,30];
+const altC = [25,45,70,40,90,55,35,60,30];
+function monta(id) {
+  const n = document.getElementById(id).content.firstElementChild.cloneNode(true);
+  if (id === "A") n.querySelector(".onda").innerHTML = altA.map((h,i)=>`<i class="${i===3?'v':''}" style="height:${h}%"></i>`).join("");
+  if (id === "B") n.querySelector(".vidro").innerHTML = altB.map((h)=>`<i style="height:${h*2.6}px"></i>`).join("");
+  if (id === "C") n.querySelector(".barras").innerHTML = altC.map((h,i)=>`<i class="${i===4?'v':''}" style="height:${h}%"></i>`).join("");
+  return n;
+}
+if (op) { document.body.appendChild(monta(op)); }
+else {
+  document.body.className = "folha";
+  const l = document.createElement("div"); l.className = "linha";
+  for (const id of ["A","B","C"]) {
+    const o = document.createElement("div"); o.className = "op";
+    o.innerHTML = `<div class="letra">${id}</div><div class="grande"></div><div class="peq"></div>`;
+    o.querySelector(".grande").appendChild(monta(id));
+    for (const s of [128, 64, 32]) {
+      const d = document.createElement("div"); d.style.width = d.style.height = s + "px";
+      const m = monta(id); m.style.transform = `scale(${s/1024})`; m.style.transformOrigin = "0 0";
+      d.appendChild(m); o.querySelector(".peq").appendChild(d);
+    }
+    l.appendChild(o);
+  }
+  document.body.appendChild(l);
+}
+</script></body></html>
