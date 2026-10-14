@@ -1,0 +1,805 @@
+# Dicionário português → inglês para a busca.
+# Formato: palavra em português: equivalentes em inglês separados por vírgula ("frases" entre aspas).
+# Acentos e maiúsculas não importam. Plurais, femininos e verbos (batendo, fechou, portas) são achados pela forma base.
+
+# casa e objetos
+porta: door, gate
+portao: gate
+janela: window
+vidro: glass
+copo: glass, cup
+garrafa: bottle
+xicara: cup, mug
+prato: plate, dish
+talher: cutlery, silverware
+garfo: fork
+faca: knife
+colher: spoon
+panela: pan, pot
+frigideira: pan, skillet
+cozinha: kitchen
+banheiro: bathroom, toilet
+privada: toilet
+descarga: flush, toilet
+chuveiro: shower
+torneira: faucet, tap
+pia: sink
+banheira: bathtub, bath
+gaveta: drawer
+armario: cabinet, closet, cupboard
+cadeira: chair
+mesa: table, desk
+cama: bed
+sofa: sofa, couch
+escada: stairs, ladder, steps
+degrau: step, stairs
+chave: key, keys
+fechadura: lock
+tranca: lock, bolt, latch
+trinco: latch
+campainha: doorbell, bell, buzzer
+interruptor: switch
+lampada: lamp, bulb, light
+luz: light
+relogio: clock, watch
+despertador: alarm, "alarm clock"
+telefone: phone, telephone
+celular: cellphone, "cell phone", mobile, phone
+radio: radio
+televisao: tv, television
+tv: tv, television
+computador: computer
+teclado: keyboard, typing
+mouse: mouse, click
+impressora: printer
+papel: paper
+livro: book
+pagina: page
+caneta: pen
+lapis: pencil
+tesoura: scissors
+envelope: envelope
+caixa: box, case
+sacola: bag
+saco: bag, sack
+bolsa: bag, purse
+mala: suitcase, luggage
+ziper: zipper
+botao: button
+moeda: coin, coins
+dinheiro: money, cash, coins
+dinheiro: money
+cofre: safe
+caixa-registradora: "cash register"
+registradora: "cash register", register
+geladeira: refrigerator, fridge
+fogao: stove
+forno: oven
+microondas: microwave
+liquidificador: blender
+aspirador: vacuum
+maquina: machine
+lavar: wash, washing
+secador: dryer, "hair dryer"
+ventilador: fan
+ar-condicionado: "air conditioner", ac
+cortina: curtain
+persiana: blinds, shutter
+tapete: carpet, rug
+lencol: sheet
+travesseiro: pillow
+espelho: mirror
+quadro: picture, frame
+moldura: frame
+brinquedo: toy
+bola: ball
+balao: balloon
+bexiga: balloon
+vela: candle
+fosforo: match, matches
+isqueiro: lighter
+cigarro: cigarette
+cinzeiro: ashtray
+
+# materiais
+metal: metal, metallic
+metalico: metal, metallic
+ferro: iron, metal
+aco: steel
+madeira: wood, wooden
+plastico: plastic
+pedra: stone, rock
+pedrinha: pebble, gravel
+cascalho: gravel
+areia: sand
+terra: dirt, earth, soil
+lama: mud
+barro: mud, clay
+concreto: concrete
+cimento: concrete, cement
+tijolo: brick
+borracha: rubber
+couro: leather
+tecido: cloth, fabric
+pano: cloth, fabric
+corrente: chain
+corda: rope
+cabo: cable, wire
+fio: wire, string
+papelao: cardboard
+folha: leaf, leaves, sheet
+galho: branch, stick
+graveto: twig, stick
+gelo: ice
+neve: snow
+osso: bone
+ceramica: ceramic, porcelain
+porcelana: porcelain, china
+
+# ações e movimentos
+bater: slam, knock, hit, bang, beat, strike
+batida: hit, slam, knock, bang, beat, impact
+pancada: hit, impact, bang, punch
+impacto: impact, hit
+fechar: close, shut, slam
+abrir: open
+trancar: lock
+destrancar: unlock
+quebrar: break, smash, shatter, crash
+quebrando: break, breaking, smash
+estilhacar: shatter, smash
+cair: fall, drop
+queda: fall, drop
+derrubar: drop, knock, topple
+jogar: throw, toss
+arremessar: throw
+arrastar: drag, scrape
+raspar: scrape, scratch
+arranhar: scratch
+esfregar: rub, scrub
+empurrar: push
+puxar: pull
+rasgar: tear, rip
+cortar: cut, chop, slice
+picar: chop
+serrar: saw
+furar: drill, pierce
+martelar: hammer
+apertar: squeeze, press
+pressionar: press
+clicar: click
+clique: click
+estalar: snap, crack, click
+estalo: snap, crack, click
+estalido: crackle, crack, click
+ranger: creak, squeak
+rangido: creak, squeak
+chiar: squeak, hiss, sizzle
+chiado: hiss, noise, squeak
+deslizar: slide
+rolar: roll
+girar: spin, turn, rotate
+balancar: swing, rattle, shake
+sacudir: shake, rattle
+chacoalhar: rattle, shake
+tremer: shake, tremble, rumble
+vibrar: vibrate, vibration
+pular: jump
+saltar: jump, leap
+correr: run, running
+andar: walk, walking, footsteps
+caminhar: walk, walking, footsteps
+passo: footstep, footsteps, step
+passos: footsteps, steps
+pisar: step, footstep
+chutar: kick
+chute: kick
+socar: punch
+soco: punch, hit
+tapa: slap
+bofetada: slap
+palma: clap, applause
+palmas: applause, clap, clapping
+aplaudir: applause, clap
+agarrar: grab
+pegar: grab, pick
+largar: drop, release
+soltar: release, drop
+encher: fill, pour
+derramar: pour, spill
+despejar: pour
+beber: drink, gulp, sip
+engolir: swallow, gulp
+comer: eat, eating, chew, bite
+mastigar: chew, chewing
+morder: bite
+cuspir: spit
+assoprar: blow
+soprar: blow
+respirar: breath, breathing, breathe
+respiracao: breath, breathing
+ofegar: pant, gasp, breathing
+suspirar: sigh
+suspiro: sigh
+bocejar: yawn
+tossir: cough
+tosse: cough
+espirrar: sneeze
+espirro: sneeze
+fungar: sniff, sniffle
+roncar: snore
+ronco: snore
+arrotar: burp, belch
+arroto: burp, belch
+soluco: hiccup
+beijar: kiss
+beijo: kiss
+gritar: scream, shout, yell
+grito: scream, shout, yell
+berro: scream, yell
+berrar: scream, yell
+chorar: cry, crying, sob
+choro: cry, crying, sob
+rir: laugh, laughing, laughter
+risada: laugh, laughter
+gargalhada: laugh, laughter
+sussurrar: whisper
+sussurro: whisper
+falar: talk, speak, voice
+conversa: conversation, talk, chatter, walla
+murmurio: murmur, walla
+gemer: moan, groan
+gemido: moan, groan
+assobiar: whistle
+assobio: whistle
+cantar: sing, singing
+explodir: explode, explosion, blast
+voar: fly, flying, flight
+nadar: swim, swimming
+mergulhar: dive, splash
+afundar: sink
+pingar: drip, drop
+gotejar: drip
+borbulhar: bubble, bubbling
+ferver: boil, boiling
+fritar: fry, sizzle
+queimar: burn, fire
+acender: light, ignite, strike
+apagar: extinguish, "blow out", off
+ligar: start, switch, "turn on", on
+desligar: "turn off", off, shutdown
+acelerar: accelerate, rev
+frear: brake, skid
+derrapar: skid
+buzinar: horn, honk
+passar: pass, passby, "pass by", "drive by", flyby
+passagem: passby, "pass by", flyby
+chegar: arrive, arrival
+partir: depart, leave
+aproximar: approach
+afastar: away, depart
+digitar: typing, type, keyboard
+escrever: writing, write
+desenhar: drawing
+folhear: "page turn", flip
+virar: turn, flip
+dobrar: fold
+amassar: crumple, crush
+esmagar: crush, squash
+espremer: squeeze
+inflar: inflate
+esvaziar: deflate
+estourar: pop, burst
+estouro: pop, burst, bang
+atirar: shoot, shot, gunshot, fire
+disparar: shoot, shot, fire
+recarregar: reload
+engatilhar: cock
+mirar: aim
+lutar: fight, fighting
+luta: fight, fighting, punch
+golpe: hit, punch, strike, blow, whoosh
+espadada: sword, slash
+cortada: slash, cut
+perfurar: stab, pierce
+esfaquear: stab
+cavar: dig, digging, shovel
+varrer: sweep, broom
+limpar: clean, wipe
+lavar-louca: dishes, washing
+costurar: sewing
+tricotar: knitting
+pescar: fishing
+
+# corpo e pessoas
+pessoa: person, people, human
+pessoas: people, crowd
+gente: people, crowd
+multidao: crowd, walla
+plateia: audience, crowd
+torcida: crowd, cheer, stadium, fans
+crianca: child, children, kid, kids, baby
+bebe: baby, infant
+homem: man, male
+mulher: woman, female
+voz: voice, vocal
+coracao: heart, heartbeat
+batimento: heartbeat, heart, beat
+estomago: stomach
+barriga: stomach, belly
+osso-quebrando: "bone break"
+dedo: finger
+mao: hand
+pe: foot, feet
+cabelo: hair
+dente: teeth, tooth
+corpo: body
+sangue: blood
+salpico: splatter, splash
+
+# natureza e clima
+chuva: rain
+chuvisco: drizzle, rain
+garoa: drizzle, rain
+tempestade: storm, thunderstorm
+trovao: thunder
+trovoada: thunder, thunderstorm
+relampago: lightning, thunder
+raio: lightning, thunder
+vento: wind
+ventania: wind, gust, storm
+brisa: breeze, wind
+rajada: gust, burst
+furacao: hurricane, storm
+tornado: tornado
+granizo: hail
+agua: water
+mar: sea, ocean, waves
+oceano: ocean, sea
+onda: wave, waves, surf
+praia: beach, surf, waves
+rio: river, stream
+riacho: stream, creek, brook
+cachoeira: waterfall
+cascata: waterfall
+lago: lake
+lagoa: pond, lake
+chafariz: fountain
+fonte: fountain
+gota: drop, drip
+respingo: splash
+espirro-de-agua: splash
+mergulho: splash, dive
+bolha: bubble, bubbles
+fogo: fire, flame
+chama: flame, fire
+fogueira: campfire, fire, bonfire
+brasa: embers, fire
+fumaca: smoke
+vapor: steam
+terremoto: earthquake, rumble
+avalanche: avalanche
+deslizamento: landslide
+floresta: forest, woods
+mata: forest, woods, jungle
+selva: jungle, rainforest
+campo: field, countryside, meadow
+fazenda: farm
+deserto: desert
+montanha: mountain
+caverna: cave
+noite: night
+dia: day
+manha: morning
+amanhecer: dawn, morning
+madrugada: night, dawn
+entardecer: dusk, evening
+arvore: tree
+grama: grass
+mato: bushes, grass, brush
+arbusto: bush
+flor: flower
+
+# animais
+animal: animal, animals
+cachorro: dog
+cao: dog
+latido: bark, barking, dog
+latir: bark, barking
+uivo: howl
+uivar: howl
+rosnar: growl, snarl
+rosnado: growl, snarl
+ganido: whimper, yelp
+gato: cat
+miado: meow
+miar: meow
+ronronar: purr
+cavalo: horse
+galope: gallop, horse
+relincho: neigh, whinny, horse
+casco: hooves, hoof
+vaca: cow, cattle
+mugido: moo, cow
+boi: ox, cattle
+porco: pig, hog
+galinha: chicken, hen
+galo: rooster
+pintinho: chick
+pato: duck
+ganso: goose
+peru: turkey
+ovelha: sheep
+cabra: goat
+bode: goat
+burro: donkey
+jumento: donkey
+passaro: bird, birds
+passarinho: bird, birds, songbird
+canto: song, singing, birdsong, chirp
+piar: chirp, tweet
+pio: chirp, tweet
+corvo: crow, raven
+coruja: owl
+aguia: eagle
+gaivota: seagull, gull
+pombo: pigeon, dove
+papagaio: parrot
+arara: macaw, parrot
+morcego: bat
+rato: mouse, rat
+ratazana: rat
+leao: lion
+rugido: roar
+rugir: roar
+tigre: tiger
+onca: jaguar
+lobo: wolf
+urso: bear
+macaco: monkey, ape
+gorila: gorilla
+elefante: elephant
+cobra: snake
+serpente: snake, serpent
+chocalho: rattle, rattlesnake
+sapo: frog, toad
+ra: frog
+grilo: cricket, crickets
+cigarra: cicada
+inseto: insect, insects, bug
+mosca: fly, flies
+mosquito: mosquito
+abelha: bee, bees
+vespa: wasp
+zumbido: buzz, hum, drone
+zumbir: buzz
+baleia: whale
+golfinho: dolphin
+peixe: fish
+dinossauro: dinosaur
+monstro: monster, creature
+criatura: creature, monster
+dragao: dragon
+
+# veículos e transporte
+carro: car, auto, vehicle
+automovel: car, auto
+veiculo: vehicle
+caminhao: truck, lorry
+onibus: bus
+moto: motorcycle, motorbike, bike
+motocicleta: motorcycle, motorbike
+bicicleta: bicycle, bike
+trem: train
+metro: subway, metro, underground
+bonde: tram, streetcar
+aviao: airplane, plane, aircraft, jet
+jato: jet
+helicoptero: helicopter
+barco: boat
+navio: ship
+lancha: speedboat, boat
+canoa: canoe
+remo: paddle, oar, rowing
+ancora: anchor
+vela-de-barco: sail
+motor: engine, motor
+pneu: tire, tyre
+freio: brake, brakes, skid
+buzina: horn, honk
+sirene: siren
+ambulancia: ambulance, siren
+policia: police
+bombeiro: fire, firetruck, "fire engine"
+viatura: police, car
+trafego: traffic
+transito: traffic
+estrada: road, highway
+rodovia: highway, freeway
+rua: street
+avenida: avenue, street, traffic
+estacionamento: parking, "parking lot"
+garagem: garage
+posto: "gas station"
+aeroporto: airport
+estacao: station
+porto: harbor, port, dock
+cais: dock, pier
+semaforo: "traffic light"
+pedagio: toll
+cinto: seatbelt, belt
+volante: "steering wheel"
+marcha: gear, shift
+escapamento: exhaust
+batida-de-carro: "car crash"
+colisao: crash, collision, impact
+acidente: crash, accident
+pouso: landing
+decolagem: takeoff, "take off"
+decolar: takeoff
+pousar: landing
+foguete: rocket
+nave: spaceship, spacecraft, ship
+
+# armas e guerra
+arma: gun, weapon
+armas: guns, weapons
+tiro: gunshot, shot, gun, fire
+tiroteio: gunfight, shootout, gunfire
+disparo: shot, gunshot, fire
+pistola: pistol, handgun, gun
+revolver: revolver, gun
+rifle: rifle
+espingarda: shotgun
+metralhadora: "machine gun", automatic
+fuzil: rifle, assault
+municao: ammo, ammunition, bullet
+bala: bullet, ricochet
+cartucho: shell, casing, cartridge
+capsula: shell, casing
+ricochete: ricochet
+granada: grenade
+bomba: bomb, explosion
+explosao: explosion, blast, boom
+estrondo: boom, bang, rumble
+canhao: cannon
+missil: missile
+mina: mine
+espada: sword, blade
+faca-de-combate: knife
+lamina: blade
+punhal: dagger
+machado: axe, ax
+lanca: spear
+flecha: arrow
+arco: bow
+escudo: shield
+armadura: armor, armour
+guerra: war, battle
+batalha: battle, war
+soldado: soldier, soldiers, army
+exercito: army, military
+militar: military
+tanque: tank
+sirene-de-guerra: "air raid"
+
+# trabalho e máquinas
+ferramenta: tool, tools
+martelo: hammer
+prego: nail
+parafuso: screw, bolt
+chave-de-fenda: screwdriver
+furadeira: drill
+serra: saw, chainsaw
+motosserra: chainsaw
+serrote: saw, handsaw
+lixa: sandpaper, sanding
+alicate: pliers
+pa: shovel
+picareta: pickaxe
+enxada: hoe
+obra: construction
+construcao: construction
+fabrica: factory, industrial
+industria: industrial, factory
+engrenagem: gear, gears, cog
+mola: spring, boing
+alavanca: lever
+manivela: crank
+polia: pulley
+roldana: pulley
+elevador: elevator, lift
+escada-rolante: escalator
+guincho: winch, crane
+guindaste: crane
+compressor: compressor
+gerador: generator
+hidraulico: hydraulic
+pneumatico: pneumatic, air
+valvula: valve
+cano: pipe
+tubo: pipe, tube
+mangueira: hose
+bomba-dagua: pump
+vazamento: leak
+escritorio: office
+grampeador: stapler
+carimbo: stamp
+xerox: photocopier, copier
+
+# eletrônicos, interface e ficção científica
+bipe: beep
+bip: beep
+apito: beep, whistle, horn
+alarme: alarm, siren
+notificacao: notification, alert, chime
+alerta: alert, alarm, warning
+erro: error
+toque: ring, ringtone, tap, touch
+tocar: ring, play
+interface: interface, ui, hud
+botao-de-interface: ui, button
+tela: screen, display
+estatica: static, noise
+ruido: noise, static, hum
+interferencia: interference, static, glitch
+falha: glitch, malfunction
+eletrico: electric, electrical
+eletricidade: electricity, electric, zap, spark
+faisca: spark, sparks
+choque: shock, zap, electric
+curto-circuito: "short circuit", spark
+zunido: hum, buzz, drone
+hum: hum
+robo: robot, droid, mechanical
+laser: laser
+raio-laser: laser, blaster
+teletransporte: teleport
+portal: portal
+magia: magic, spell
+feitico: spell, magic
+energia: energy, power
+campo-de-forca: forcefield, "force field"
+espacial: space, spaceship
+espaco: space
+alienigena: alien
+futurista: futuristic, sci-fi, scifi
+ficcao: sci-fi, scifi
+holograma: hologram
+radar: radar, sonar
+sonar: sonar
+servo: servo
+computadorizado: computer
+digital: digital
+
+# sons e efeitos genéricos
+som: sound
+barulho: noise, sound
+transicao: transition, whoosh, swoosh, swish
+passagem-rapida: whoosh, swoosh
+zum: whoosh, zoom
+assovio: whistle, whoosh
+swoosh: swoosh, whoosh
+riser: riser, rise
+subida: riser, rise, rising
+descida: down, fall, descending
+impacto-grave: "sub drop", boom, hit
+grave: low, deep, bass, sub
+agudo: high, shrill
+eco: echo, reverb
+reverb: reverb, echo
+distante: distant, far
+longe: distant, far
+perto: close, near
+proximo: close, near
+interno: interior, indoor, inside
+interior: interior, indoor
+externo: exterior, outdoor, outside
+exterior: exterior, outdoor
+ambiente: ambience, ambiance, atmosphere, room, tone
+ambiencia: ambience, ambiance, atmosphere
+atmosfera: atmosphere, ambience
+clima: atmosphere, mood, weather
+silencio: silence, "room tone", quiet
+tensao: tension, suspense, drone
+suspense: suspense, tension
+terror: horror, scary, creepy
+horror: horror, scary
+assustador: scary, creepy, spooky
+susto: scare, jump, stinger
+fantasma: ghost, spooky
+misterio: mystery
+comedia: comedy, cartoon, funny
+desenho: cartoon
+cartoon: cartoon
+engracado: funny, comic, cartoon
+musica: music, musical
+musical: music, musical
+instrumento: instrument
+sino: bell, bells
+sinos: bells, chimes
+gongo: gong
+tambor: drum, drums
+bateria: drums, drum
+piano: piano
+guitarra: guitar
+violao: guitar, acoustic
+violino: violin
+flauta: flute
+trompete: trumpet
+corneta: horn, bugle
+harpa: harp
+orgao: organ
+caixinha-de-musica: "music box"
+aplauso: applause, clapping
+vaia: boo, booing
+risos: laughter, laugh
+festa: party, celebration
+fogos: fireworks
+foguetorio: fireworks
+restaurante: restaurant, cafe, dining
+bar: bar, pub
+cafe: cafe, coffee
+cafeteria: cafe, coffee
+loja: shop, store
+mercado: market, supermarket
+supermercado: supermarket, store
+shopping: mall
+escola: school, classroom
+igreja: church
+hospital: hospital
+prisao: prison, jail
+cadeia: jail, prison
+cela: cell, prison
+tribunal: courtroom, court
+estadio: stadium, crowd
+cidade: city, urban, town
+urbano: urban, city
+rural: rural, countryside
+vila: village
+parque: park, playground
+playground: playground
+piscina: pool, swimming
+academia: gym
+hotel: hotel, lobby
+sala: room
+quarto: room, bedroom
+corredor: hallway, corridor
+porao: basement
+sotao: attic
+
+# adjetivos e intensidade
+forte: hard, heavy, loud, strong
+fraco: soft, light, weak
+suave: soft, gentle, light
+leve: light, soft
+pesado: heavy, hard
+grande: big, large, huge
+enorme: huge, massive, giant
+pequeno: small, little, tiny
+rapido: fast, quick
+lento: slow
+longo: long
+curto: short
+alto: loud, high
+baixo: low, quiet, soft
+velho: old
+antigo: old, vintage, antique
+moderno: modern
+novo: new
+quebrado: broken
+vazio: empty
+cheio: full
+molhado: wet
+seco: dry
+quente: hot
+frio: cold
+duplo: double
+unico: single
+varios: multiple, many
+multiplo: multiple
+sequencia: sequence, series
+continuo: continuous, loop, steady
+loop: loop
+estereo: stereo
+mono: mono

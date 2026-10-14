@@ -1,0 +1,9 @@
+/target
+/app/gen/
+/app/binaries/
+node_modules/
+.DS_Store
+/testes-ui/capturas/
+*.dmg
+/ferramentas-teste/
+/app/binaries/_t/

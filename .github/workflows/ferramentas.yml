@@ -1,0 +1,109 @@
+name: Ferramentas embutidas
+
+# Compila ffmpeg, ffprobe e raw2bmx de cada plataforma (os mesmos que vão no instalador) e roda os
+# testes do motor com eles. O resultado fica no cache, e a Release reaproveita.
+on:
+  push:
+    branches: ["**"]
+    paths: ["scripts/compilar-ferramentas.sh", ".github/workflows/ferramentas.yml", "motor/**"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ferramentas:
+    name: Ferramentas ${{ matrix.nome }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nome: macOS Apple Silicon
+            os: macos-latest
+            alvo: aarch64-apple-darwin
+          - nome: macOS Intel
+            os: macos-latest
+            alvo: x86_64-apple-darwin
+          - nome: Windows
+            os: windows-latest
+            alvo: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache das ferramentas
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/binaries/*-${{ matrix.alvo }}*
+            ferramentas-teste/mxf2raw-${{ matrix.alvo }}*
+          key: ferramentas-${{ matrix.alvo }}-${{ hashFiles('scripts/compilar-ferramentas.sh') }}
+
+      # --- Mac ---
+      - name: Dependências (Mac)
+        if: runner.os == 'macOS' && steps.cache.outputs.cache-hit != 'true'
+        run: brew install nasm pkg-config
+      - name: Compilar (Mac)
+        if: runner.os == 'macOS' && steps.cache.outputs.cache-hit != 'true'
+        run: scripts/compilar-ferramentas.sh ${{ matrix.alvo }} tudo
+
+      # --- Windows: ffmpeg no MSYS2 (MinGW, estático); bmx com o Visual Studio ---
+      - uses: msys2/setup-msys2@v2
+        if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
+        with:
+          msystem: MINGW64
+          update: false
+          install: >-
+            mingw-w64-x86_64-toolchain mingw-w64-x86_64-nasm mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-zlib make diffutils tar xz curl
+      - name: Compilar ffmpeg (Windows)
+        if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
+        shell: msys2 {0}
+        run: scripts/compilar-ferramentas.sh ${{ matrix.alvo }} ffmpeg
+      - name: Compilar raw2bmx (Windows)
+        if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: scripts/compilar-ferramentas.sh ${{ matrix.alvo }} bmx
+
+      # --- testes do motor com as ferramentas compiladas ---
+      - name: Pasta com os nomes simples
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/ferr"
+          ext=""; [ "$RUNNER_OS" = "Windows" ] && ext=".exe"
+          for p in ffmpeg ffprobe raw2bmx; do cp "app/binaries/$p-${{ matrix.alvo }}$ext" "$RUNNER_TEMP/ferr/$p$ext"; done
+          # mxf2raw (usado pelos testes) numa pasta à parte, no PATH; o ffmpeg do PATH continua sendo o completo
+          mkdir -p "$RUNNER_TEMP/mxf2raw"
+          cp "ferramentas-teste/mxf2raw-${{ matrix.alvo }}$ext" "$RUNNER_TEMP/mxf2raw/mxf2raw$ext"
+          chmod +x "$RUNNER_TEMP/ferr/"* "$RUNNER_TEMP/mxf2raw/"* || true
+          echo "SFXFINDER_FERRAMENTAS=$RUNNER_TEMP/ferr" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/mxf2raw" >> "$GITHUB_PATH"
+      - name: ffmpeg completo para gerar os arquivos de teste
+        if: matrix.alvo != 'x86_64-apple-darwin'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then brew install ffmpeg; else choco install ffmpeg -y --no-progress; fi
+      - uses: dtolnay/rust-toolchain@stable
+        if: matrix.alvo != 'x86_64-apple-darwin'
+      - uses: Swatinem/rust-cache@v2
+        if: matrix.alvo != 'x86_64-apple-darwin'
+      - name: Testes do motor com as ferramentas embutidas
+        if: matrix.alvo != 'x86_64-apple-darwin'
+        shell: bash
+        run: |
+          # o ffmpeg do sistema (completo) gera os arquivos de teste; o motor usa o compilado (SFXFINDER_FERRAMENTAS)
+          "$SFXFINDER_FERRAMENTAS/ffmpeg" -hide_banner -encoders | grep -E "libmp3lame|libopus|libvorbis"
+          cargo test --release -p motor
+      - name: Ferramentas Intel rodam (Rosetta)
+        if: matrix.alvo == 'x86_64-apple-darwin'
+        continue-on-error: true
+        run: |
+          file "$SFXFINDER_FERRAMENTAS/ffmpeg"
+          arch -x86_64 "$SFXFINDER_FERRAMENTAS/ffmpeg" -hide_banner -version | head -1
+          arch -x86_64 "$SFXFINDER_FERRAMENTAS/raw2bmx" -v | head -1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ferramentas-${{ matrix.alvo }}
+          path: app/binaries/*-${{ matrix.alvo }}*

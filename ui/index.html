@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SFX Finder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">SFX <span>FINDER</span></div>
+    <div class="sub"><span id="sub1">—</span><br><button class="link" id="atualizar">atualizar</button> · <span id="sub2">banco: —</span></div>
+    <label class="busca">
+      <span class="lupa">⌕</span>
+      <input id="q" type="text" placeholder="buscar sons… (ex.: porta batendo, door slam, -metal)" autocomplete="off" spellcheck="false">
+      <span class="dica" id="dica"></span>
+      <button class="btn-busca" id="buscar">BUSCAR</button>
+    </label>
+    <button class="engr" id="engr" title="Ajustes">⚙</button>
+  </header>
+
+  <div class="filtros">
+    <span class="rot apagado">Filtrar</span>
+    <button class="chip" data-filtro="dur"></button>
+    <button class="chip" data-filtro="qual"></button>
+    <button class="chip" data-filtro="canais"></button>
+    <button class="chip" data-filtro="gosto"></button>
+    <span class="esp"></span>
+    <span class="cont" id="cont"></span>
+  </div>
+
+  <main class="corpo">
+    <nav class="bilhete bibs" id="bibs"></nav>
+
+    <section class="bilhete res">
+      <div class="cab rot"><span></span><span>Som · origem</span><span>Forma de onda</span><span class="dir">Dur.</span><span>Formato</span><span class="centro">Gosto</span><span></span></div>
+      <div class="linhas" id="linhas"></div>
+      <div class="player" id="player">
+        <button class="big" id="tocar" title="Tocar (espaço)">▶</button>
+        <div class="meio">
+          <div class="t"><b id="p-nome">—</b><span class="tab" id="p-tempo"></span></div>
+          <div class="grande" id="grande"><canvas id="onda-grande"></canvas><div class="trecho oculto" id="trecho"><button id="sem-trecho" title="Tirar o trecho">✕</button></div><div class="cursor-play" id="cursor"></div></div>
+          <div class="teclas"><b>espaço</b> toca · <b>↑ ↓</b> troca de som · <b>enter</b> põe na cesta · <b>arraste</b> o som para o Finder ou o Avid · arraste na onda para marcar um trecho</div>
+        </div>
+        <div class="ctl">
+          <button class="mini" id="repetir">↻ REPETIR</button>
+          <button class="mini" id="revelar">ABRIR NA PASTA</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="bilhete cesta">
+      <div class="cab2"><span class="num tab" id="n-cesta">0</span><b>Na cesta</b><span class="esp"></span><button class="limpar" id="esvaziar">esvaziar</button></div>
+      <div class="itens" id="itens"></div>
+      <div class="picote"></div>
+      <div class="dest">
+        <div class="campo">
+          <span class="rot">Pasta de destino</span>
+          <button class="caixa" id="destino"></button>
+          <span class="rot" id="rot-temas">Subpasta temática</span>
+          <div class="temas" id="temas"></div>
+        </div>
+        <div class="seg" id="acao"><button data-acao="copiar">COPIAR</button><button data-acao="converter">CONVERTER</button></div>
+        <div class="campo" id="conv">
+          <div class="fmts" id="fmts"></div>
+          <div class="lin2" id="params"></div>
+        </div>
+        <div class="campo oculto" id="copia-info"><span class="nota">Copia o arquivo original, sem mudar o formato.</span></div>
+        <button class="chk" data-op="traduzir"><i></i>Traduzir o nome para o português</button>
+        <button class="chk" data-op="encurtar"><i></i>Encurtar o nome <small>(até 3 palavras)</small></button>
+        <button class="chk" data-op="origem"><i></i>Criar ORIGEM.txt <small>(de onde veio cada som)</small></button>
+        <button class="ir" id="ir" disabled></button>
+      </div>
+    </aside>
+  </main>
+
+  <div class="menu oculto" id="menu"></div>
+  <div class="aviso oculto" id="aviso"></div>
+
+  <div class="veu oculto" id="boas">
+    <div class="boas">
+      <div class="rot">Bem-vindo ao SFX Finder</div>
+      <h2>ONDE ESTÁ O SEU BANCO DE SONS?</h2>
+      <p>Escolha a pasta com os seus efeitos sonoros. O app lê tudo uma vez e guarda um índice. Nas próximas vezes ele abre na hora; para conferir o que mudou, use “atualizar”, no alto.</p>
+      <button class="caixa vazia" id="boas-pasta">+ ESCOLHER A PASTA DO BANCO</button>
+      <div id="boas-prog" class="oculto">
+        <div class="linha"><span id="boas-txt">Procurando os sons…</span><span class="tab" id="boas-n"></span></div>
+        <div class="barra"><i id="boas-barra"></i></div>
+        <p class="pequeno">Você já pode buscar enquanto ele termina.</p>
+        <div class="boas-botoes"><button class="mini on" id="boas-fechar">BUSCAR ENQUANTO TERMINA</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="veu oculto" id="ajustes">
+    <div class="boas">
+      <div class="rot">Ajustes</div>
+      <h2>SFX FINDER</h2>
+      <div class="campo"><span class="rot">Banco de sons</span><button class="caixa" id="aj-banco"></button></div>
+      <p id="aj-info"></p>
+      <div class="boas-botoes"><button class="mini" id="aj-atualizar">ATUALIZAR O ÍNDICE</button><button class="mini on" id="aj-fechar">FECHAR</button></div>
+      <p class="pequeno" id="versao"></p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

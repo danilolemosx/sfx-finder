@@ -1,0 +1,70 @@
+name: Testes
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  testes:
+    name: Testes do motor (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: ffmpeg
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) sudo apt-get update && sudo apt-get install -y ffmpeg ;;
+            macOS) brew install ffmpeg ;;
+            Windows) choco install ffmpeg -y --no-progress ;;
+          esac
+      # raw2bmx para os testes de MXF (no Linux; no Mac e no Windows os testes de MXF rodam em "Ferramentas embutidas")
+      - name: Cache do raw2bmx (Linux)
+        if: runner.os == 'Linux'
+        id: bmx
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/binaries/raw2bmx-x86_64-unknown-linux-gnu
+            ferramentas-teste/mxf2raw-x86_64-unknown-linux-gnu
+          key: bmx-linux-${{ hashFiles('scripts/compilar-ferramentas.sh') }}
+      - name: Compilar raw2bmx (Linux)
+        if: runner.os == 'Linux' && steps.bmx.outputs.cache-hit != 'true'
+        run: sudo apt-get install -y uuid-dev && scripts/compilar-ferramentas.sh x86_64-unknown-linux-gnu bmx
+      - name: raw2bmx no PATH (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p "$RUNNER_TEMP/bmx"
+          cp app/binaries/raw2bmx-x86_64-unknown-linux-gnu "$RUNNER_TEMP/bmx/raw2bmx"
+          cp ferramentas-teste/mxf2raw-x86_64-unknown-linux-gnu "$RUNNER_TEMP/bmx/mxf2raw"
+          echo "$RUNNER_TEMP/bmx" >> "$GITHUB_PATH"
+      - name: Testes do motor
+        run: cargo test --release -p motor
+
+  app:
+    name: App compila (Linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Dependências do Tauri no Linux
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev
+      - name: Ferramentas de mentira (só para compilar)
+        run: |
+          mkdir -p app/binaries
+          for p in ffmpeg ffprobe raw2bmx; do touch "app/binaries/$p-x86_64-unknown-linux-gnu"; done
+      - name: Compilar o app
+        run: cargo build -p sfx-finder
