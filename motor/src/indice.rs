@@ -138,6 +138,24 @@ pub enum Gosto {
     SemRuins,
 }
 
+/// Coluna clicada na lista de resultados.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Coluna {
+    Nome,
+    Duracao,
+    Formato,
+    Gosto,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Ordem {
+    pub coluna: Coluna,
+    /// Decrescente.
+    pub desc: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Lista {
@@ -161,6 +179,8 @@ pub struct Consulta {
     pub grupo: Option<String>,
     pub biblioteca: Option<String>,
     pub lista: Option<Lista>,
+    /// Ordem escolhida clicando na coluna; `None` = 👍 primeiro, depois qualidade e relevância.
+    pub ordem: Option<Ordem>,
     pub limite: Option<usize>,
 }
 
@@ -586,8 +606,21 @@ impl Indice {
         let sql = format!(
             "select f.caminho, f.nome, f.ext, f.dur, f.sr, f.ch, f.bits, f.kbps, f.grupo, f.biblioteca, f.pasta, f.meta, {voto},
                     (select destino from usos where caminho = f.caminho order by quando desc limit 1)
-             from {de} {} order by {voto} desc, {qual}, {relevancia} limit ?",
-            where_sql(&onde)
+             from {de} {} order by {} limit ?",
+            where_sql(&onde),
+            match c.ordem {
+                None => format!("{voto} desc, {qual}, {relevancia}"),
+                Some(o) => {
+                    let d = if o.desc { "desc" } else { "asc" };
+                    match o.coluna {
+                        Coluna::Nome => format!("f.nome collate nocase {d}, {relevancia}"),
+                        // sem duração conhecida vai para o fim nos dois sentidos
+                        Coluna::Duracao => format!("f.dur is null, f.dur {d}, {relevancia}"),
+                        Coluna::Formato => format!("f.ext {d}, f.sr {d}, coalesce(f.bits, 0) {d}, coalesce(f.kbps, 0) {d}, {relevancia}"),
+                        Coluna::Gosto => format!("{voto} {d}, {qual}, {relevancia}"),
+                    }
+                }
+            }
         );
         args.push((c.limite.unwrap_or(500) as i64).into());
         let mut st = self.con.prepare(&sql)?;

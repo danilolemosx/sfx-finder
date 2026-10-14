@@ -29,7 +29,7 @@ const rotuloGrupo = (g) => (g ? g.replace(/^\d+[\s_-]*/, "").replace(/_/g, " ") 
 // ---------- preferências (lembradas entre aberturas) ----------
 const PADRAO = {
   destino: null, tema: null, acao: "converter", formato: "wav", taxa: 48000, bits: 24, kbps: {}, fps: { num: 25, den: 1, drop: false },
-  traduzir: true, encurtar: true, origem: true, repetir: false,
+  traduzir: true, encurtar: true, origem: true, repetir: false, ordem: null,
   filtros: { durMax: null, durMin: null, semPerda: false, canais: null, gosto: "todos" },
 };
 let pref = structuredClone(PADRAO);
@@ -61,7 +61,7 @@ function consulta() {
     texto: $("#q").value.trim(),
     durMin: f.durMin, durMax: f.durMax, soSemPerda: f.semPerda, canais: f.canais, gosto: f.gosto,
     grupo: filtroBib ? filtroBib.grupo : null, biblioteca: filtroBib ? filtroBib.biblioteca : null,
-    lista, limite: 500,
+    lista, ordem: pref.ordem, limite: 500,
   };
 }
 
@@ -87,10 +87,33 @@ function buscarDepois() { clearTimeout(tBusca); tBusca = setTimeout(buscar, 220)
 function renderDica() {
   const d = resp.traducoes || [];
   $("#dica").innerHTML = d.length ? `→ buscando também <b>${d.map(esc).join(" · ")}</b>` : "";
-  const ordem = `ordem: <i>gostei primeiro, depois qualidade</i>`;
+  const NOMES = { nome: "nome", duracao: "duração", formato: "formato", gosto: "gosto" };
+  const o = pref.ordem;
+  const ordem = o ? `ordem: <i>${NOMES[o.coluna]} ${o.desc ? "decrescente" : "crescente"}</i> · <button class="link" id="ordem-normal">normal</button>` : `ordem: <i>gostei primeiro, depois qualidade</i>`;
   const temBusca = consulta().texto || filtroBib || lista;
   $("#cont").innerHTML = temBusca ? `<b class="tab">${milhar(resp.total)}</b> ${resp.total === 1 ? "som encontrado" : "sons encontrados"}${resp.total > resp.sons.length ? ` (mostrando ${milhar(resp.sons.length)})` : ""} · ${ordem}` : "";
 }
+
+// ---------- ordem pelas colunas: 1º clique crescente, 2º decrescente, 3º volta ao normal ----------
+function renderCab() {
+  document.querySelectorAll("#cab [data-col]").forEach((b) => {
+    const on = pref.ordem && pref.ordem.coluna === b.dataset.col;
+    b.classList.toggle("on", !!on);
+    b.classList.toggle("desc", !!(on && pref.ordem.desc));
+    b.title = "Ordenar por esta coluna";
+  });
+}
+$("#cab").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-col]");
+  if (!b) return;
+  const c = b.dataset.col, o = pref.ordem;
+  pref.ordem = !o || o.coluna !== c ? { coluna: c, desc: false } : !o.desc ? { coluna: c, desc: true } : null;
+  salvar(); renderCab(); buscar();
+});
+$("#cont").addEventListener("click", (e) => {
+  if (e.target.id !== "ordem-normal") return;
+  pref.ordem = null; salvar(); renderCab(); buscar();
+});
 
 // ---------- filtros ----------
 const OP_FILTROS = {
@@ -924,6 +947,7 @@ addEventListener("resize", () => { for (const i of visiveis) desenharMini($(`can
 (async () => {
   renderFiltros();
   renderOpcoes();
+  renderCab();
   larguraBusca();
   renderCesta();
   try { est = { ...est, ...(await invoke("estado")) }; } catch (e) { aviso(`Erro ao abrir: ${e}`); }

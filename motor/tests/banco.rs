@@ -106,6 +106,26 @@ fn indexa_e_busca() {
 }
 
 #[test]
+fn ordena_pela_coluna() {
+    use motor::indice::{Coluna, Ordem};
+    let raiz = pasta("ordem");
+    banco(&raiz);
+    let mut ind = Indice::em_memoria().unwrap();
+    indexar(&mut ind, &raiz);
+    let por = |coluna, desc| {
+        ind.buscar(&Consulta { texto: "door".into(), ordem: Some(Ordem { coluna, desc }), ..Default::default() }, Dicionario::embutido()).unwrap()
+    };
+    let durs = |r: &motor::indice::Resposta| r.sons.iter().map(|s| (s.dur.unwrap() * 10.0).round() as i32).collect::<Vec<_>>();
+    assert_eq!(durs(&por(Coluna::Duracao, false)), [12, 18, 24, 27]);
+    assert_eq!(durs(&por(Coluna::Duracao, true)), [27, 24, 18, 12]);
+    let exts = |r: &motor::indice::Resposta| r.sons.iter().map(|s| s.ext.clone()).collect::<Vec<_>>();
+    assert_eq!(exts(&por(Coluna::Formato, false)), ["mp3", "wav", "wav", "wav"]);
+    assert_eq!(exts(&por(Coluna::Formato, true))[0], "wav");
+    assert_eq!(nomes(&por(Coluna::Nome, false))[0], "07045298 Fire engine, door slammed");
+    assert_eq!(nomes(&por(Coluna::Nome, true))[0], "Laundry Dryer Door Slam");
+}
+
+#[test]
 fn gosto_e_usados() {
     let raiz = pasta("gosto");
     banco(&raiz);

@@ -1,5 +1,5 @@
 // Tauri falso para testar a interface no navegador, sem o app.
-// Cenas pela URL: ?cena=principal | primeira | lendo | sem-destino | vazio | convertendo
+// Cenas pela URL: ?cena=principal | primeira | lendo | sem-destino | vazio | convertendo | ordem
 "use strict";
 (function () {
   const cena = new URLSearchParams(location.search).get("cena") || "principal";
@@ -99,6 +99,7 @@
   // preferências de cada cena
   const pref = { destino: "/Volumes/B_03 JOBS/SFX_EP18", tema: "PORTAS", acao: "converter", formato: "mxf", taxa: 48000, bits: 24, traduzir: true, encurtar: true, origem: true };
   if (cena === "sem-destino") pref.destino = null;
+  if (cena === "ordem") pref.ordem = { coluna: "duracao", desc: true };
   try { localStorage.setItem("sfxfinder", JSON.stringify(pref)); } catch (_) { /* sem storage */ }
 
   // depois que o app abre: digita a busca, enche a cesta, abre a primeira vez…

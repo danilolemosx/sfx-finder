@@ -96,6 +96,11 @@ input { font: inherit; color: inherit; background: none; border: none; outline: 
 .res .cab, .lin { display: grid; grid-template-columns: 34px minmax(0, 1fr) minmax(90px, 132px) 50px 84px 62px 28px; gap: 12px; align-items: center; }
 .res .cab { padding: 12px 18px 8px; border-bottom: 2px solid var(--tinta); align-items: end; }
 .dir { text-align: right; } .centro { text-align: center; }
+.cab button { letter-spacing: inherit; text-transform: inherit; font-weight: inherit; white-space: nowrap; }
+.cab button:hover { color: var(--tinta); }
+.cab button.on { color: var(--destaque); }
+.cab button.on::after { content: " ▲"; }
+.cab button.on.desc::after { content: " ▼"; }
 .linhas { flex: 1; overflow-y: auto; outline: none; }
 .lin { padding: 7px 18px; border-bottom: 1px solid var(--linha); cursor: default; }
 .lin:hover { background: rgba(52, 49, 45, .04); }
