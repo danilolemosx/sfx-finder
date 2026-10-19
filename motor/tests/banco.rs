@@ -195,7 +195,9 @@ fn copia_e_converte() {
 
     // copiar: o mesmo arquivo, com o nome novo; a segunda vez não sobrescreve
     let r = enviar(&ferr, &item, &envio(&destino, Acao::Copiar, Formato::Wav), &mut |_| {}, &nada).unwrap();
-    assert!(r.arquivos[0].ends_with("PORTAS/Porta Metal Batendo.wav"), "{:?}", r.arquivos);
+    let copia = Path::new(&r.arquivos[0]);
+    assert_eq!(copia.file_name().unwrap(), "Porta Metal Batendo.wav", "{:?}", r.arquivos);
+    assert_eq!(copia.parent().unwrap().file_name().unwrap(), "PORTAS");
     assert_eq!(std::fs::read(&r.arquivos[0]).unwrap(), std::fs::read(&original).unwrap());
     let r2 = enviar(&ferr, &item, &envio(&destino, Acao::Copiar, Formato::Wav), &mut |_| {}, &nada).unwrap();
     assert!(r2.arquivos[0].ends_with("Porta Metal Batendo_2.wav"));
