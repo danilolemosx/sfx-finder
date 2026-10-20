@@ -46,7 +46,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.alvo }}
-      # ffmpeg, ffprobe e raw2bmx embutidos (app/binaries/<nome>-<alvo>, ver "externalBin" no tauri.conf.json).
+      # ffmpeg, ffprobe, raw2bmx e llama-server embutidos (app/binaries/<nome>-<alvo>, ver "externalBin" no tauri.conf.json).
       # Normalmente vêm do cache do workflow "Ferramentas embutidas"; se não, compila aqui (20 a 40 min).
       - name: Cache das ferramentas
         id: cache
@@ -75,6 +75,20 @@ jobs:
         if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: scripts/compilar-ferramentas.sh ${{ matrix.triplo }} bmx
+      - name: Compilar llama-server (Windows)
+        if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: scripts/compilar-ferramentas.sh ${{ matrix.triplo }} llama
+      # modelo da IA, que vai dentro do instalador (app/modelo/qwen.gguf, ver "resources" no tauri.conf.json)
+      - name: Cache do modelo da IA
+        uses: actions/cache@v4
+        with:
+          path: app/modelo/qwen.gguf
+          key: modelo-${{ hashFiles('scripts/baixar-modelo.sh') }}
+          enableCrossOsArchive: true
+      - name: Modelo da IA
+        shell: bash
+        run: scripts/baixar-modelo.sh
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -98,5 +112,4 @@ jobs:
           name: instaladores-${{ matrix.os }}-${{ matrix.alvo }}
           path: |
             target/*/release/bundle/dmg/*.dmg
-            target/release/bundle/msi/*.msi
             target/release/bundle/nsis/*.exe

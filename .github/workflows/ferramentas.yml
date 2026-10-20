@@ -1,11 +1,11 @@
 name: Ferramentas embutidas
 
-# Compila ffmpeg, ffprobe e raw2bmx de cada plataforma (os mesmos que vão no instalador) e roda os
+# Compila ffmpeg, ffprobe, raw2bmx e llama-server (IA) de cada plataforma (os mesmos que vão no instalador) e roda os
 # testes do motor com eles. O resultado fica no cache, e a Release reaproveita.
 on:
   push:
     branches: ["**"]
-    paths: ["scripts/compilar-ferramentas.sh", ".github/workflows/ferramentas.yml", "motor/**"]
+    paths: ["scripts/compilar-ferramentas.sh", "scripts/baixar-modelo.sh", ".github/workflows/ferramentas.yml", "motor/**"]
   workflow_dispatch:
 
 env:
@@ -65,6 +65,23 @@ jobs:
         if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: scripts/compilar-ferramentas.sh ${{ matrix.alvo }} bmx
+      - name: Compilar llama-server (Windows)
+        if: runner.os == 'Windows' && steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: scripts/compilar-ferramentas.sh ${{ matrix.alvo }} llama
+
+      # modelo da IA (1,5 GB), para o teste da IA de verdade
+      - name: Cache do modelo da IA
+        if: matrix.alvo != 'x86_64-apple-darwin'
+        uses: actions/cache@v4
+        with:
+          path: app/modelo/qwen.gguf
+          key: modelo-${{ hashFiles('scripts/baixar-modelo.sh') }}
+          enableCrossOsArchive: true
+      - name: Modelo da IA
+        if: matrix.alvo != 'x86_64-apple-darwin'
+        shell: bash
+        run: scripts/baixar-modelo.sh
 
       # --- testes do motor com as ferramentas compiladas ---
       - name: Pasta com os nomes simples
@@ -72,7 +89,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/ferr"
           ext=""; [ "$RUNNER_OS" = "Windows" ] && ext=".exe"
-          for p in ffmpeg ffprobe raw2bmx; do cp "app/binaries/$p-${{ matrix.alvo }}$ext" "$RUNNER_TEMP/ferr/$p$ext"; done
+          for p in ffmpeg ffprobe raw2bmx llama-server; do cp "app/binaries/$p-${{ matrix.alvo }}$ext" "$RUNNER_TEMP/ferr/$p$ext"; done
           # mxf2raw (usado pelos testes) numa pasta à parte, no PATH; o ffmpeg do PATH continua sendo o completo
           mkdir -p "$RUNNER_TEMP/mxf2raw"
           cp "ferramentas-teste/mxf2raw-${{ matrix.alvo }}$ext" "$RUNNER_TEMP/mxf2raw/mxf2raw$ext"
@@ -102,6 +119,7 @@ jobs:
           file "$SFXFINDER_FERRAMENTAS/ffmpeg"
           arch -x86_64 "$SFXFINDER_FERRAMENTAS/ffmpeg" -hide_banner -version | head -1
           arch -x86_64 "$SFXFINDER_FERRAMENTAS/raw2bmx" -v | head -1
+          arch -x86_64 "$SFXFINDER_FERRAMENTAS/llama-server" --version 2>&1 | head -2
 
       - uses: actions/upload-artifact@v4
         with:

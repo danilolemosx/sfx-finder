@@ -62,7 +62,8 @@
       "nsis": {
         "languages": [
           "PortugueseBR"
-        ]
+        ],
+        "compression": "none"
       }
     },
     "resources": {

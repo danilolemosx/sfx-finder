@@ -77,7 +77,7 @@ case "$ALVO" in
     FF_ARGS=(--target-os=mingw32 --extra-ldflags=-static --pkg-config-flags=--static)
     CMAKE_ARGS=(-DBMX_SET_MSVC_RUNTIME=MT)
     # Windows: processador (AVX2), sem OpenMP e com o runtime estático (não precisa de DLL do Visual Studio)
-    LLAMA_ARGS=(-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DGGML_OPENMP=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON)
+    LLAMA_ARGS=(-DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DGGML_OPENMP=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON)
     ;;
   x86_64-unknown-linux-gnu)
     CMAKE_ARGS=()
