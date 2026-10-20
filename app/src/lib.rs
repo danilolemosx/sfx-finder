@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use serde::Serialize;
 use tauri::ipc::Channel;
@@ -21,6 +21,65 @@ static CANCELAR_INDICE: AtomicBool = AtomicBool::new(false);
 static CANCELAR_ENVIO: AtomicBool = AtomicBool::new(false);
 /// Cada nova busca muda a geração; os pedidos de forma de onda antigos param.
 static GERACAO_ONDAS: AtomicU64 = AtomicU64::new(0);
+/// IA local (abre junto com o app, em segundo plano) e como ela está: "abrindo", "pronta" ou o erro.
+static IA: Mutex<Option<Arc<motor::ia::Ia>>> = Mutex::new(None);
+static IA_ESTADO: Mutex<String> = Mutex::new(String::new());
+
+fn ia() -> Option<Arc<motor::ia::Ia>> {
+    IA.lock().ok().and_then(|g| g.clone())
+}
+
+fn ia_estado_txt() -> String {
+    IA_ESTADO.lock().map(|g| g.clone()).unwrap_or_default()
+}
+
+/// Fecha um servidor da IA que tenha ficado aberto da última vez (se o app caiu).
+fn fechar_ia_antiga(pid_arq: &Path) {
+    let Ok(pid) = std::fs::read_to_string(pid_arq) else { return };
+    let pid = pid.trim();
+    if pid.is_empty() {
+        return;
+    }
+    #[cfg(unix)]
+    {
+        let nome = std::process::Command::new("ps").args(["-p", pid, "-o", "comm="]).output().map(|o| String::from_utf8_lossy(&o.stdout).into_owned()).unwrap_or_default();
+        if nome.contains("llama-server") {
+            let _ = std::process::Command::new("kill").arg(pid).status();
+        }
+    }
+    #[cfg(windows)]
+    {
+        let lista = motor::ferramentas::comando(Path::new("tasklist")).args(["/FI", &format!("PID eq {pid}"), "/NH"]).output().map(|o| String::from_utf8_lossy(&o.stdout).into_owned()).unwrap_or_default();
+        if lista.to_lowercase().contains("llama-server") {
+            let _ = motor::ferramentas::comando(Path::new("taskkill")).args(["/PID", pid, "/F"]).status();
+        }
+    }
+    let _ = std::fs::remove_file(pid_arq);
+}
+
+/// Abre a IA em segundo plano (alguns segundos). O app funciona sem ela, só com o dicionário.
+fn abrir_ia(app: &tauri::AppHandle) {
+    let modelo = app.path().resource_dir().map(|d| d.join("modelo").join("qwen.gguf")).unwrap_or_default();
+    let pid_arq = app.path().app_data_dir().map(|d| d.join("ia.pid")).unwrap_or_default();
+    *IA_ESTADO.lock().unwrap() = "abrindo".into();
+    std::thread::spawn(move || {
+        fechar_ia_antiga(&pid_arq);
+        let r = ferramentas().and_then(|f| f.llama.clone().ok_or_else(|| "llama-server não encontrado".to_string())).and_then(|servidor| {
+            motor::ia::Ia::iniciar(&servidor, &modelo).map_err(erro)
+        });
+        match r {
+            Ok(ia) => {
+                if let Some(p) = pid_arq.parent() {
+                    let _ = std::fs::create_dir_all(p);
+                }
+                let _ = std::fs::write(&pid_arq, ia.pid().to_string());
+                *IA.lock().unwrap() = Some(Arc::new(ia));
+                *IA_ESTADO.lock().unwrap() = "pronta".into();
+            }
+            Err(e) => *IA_ESTADO.lock().unwrap() = e,
+        }
+    });
+}
 
 fn ferramentas() -> Result<&'static Ferramentas, String> {
     FERRAMENTAS
@@ -67,10 +126,21 @@ struct Estado {
     atualizado_em: Option<i64>,
     indexando: bool,
     ranking: Ranking,
+    /// "abrindo", "pronta" ou o erro.
+    ia: String,
+}
+
+/// Roda fora do fio da janela: um disco lento ou desligado nunca congela a tela.
+async fn fora<T: Send + 'static>(f: impl FnOnce() -> T + Send + 'static) -> Result<T, String> {
+    tauri::async_runtime::spawn_blocking(f).await.map_err(erro)
 }
 
 #[tauri::command]
-fn estado() -> Result<Estado, String> {
+async fn estado() -> Result<Estado, String> {
+    fora(estado_agora).await?
+}
+
+fn estado_agora() -> Result<Estado, String> {
     let erro = match ferramentas() {
         Err(e) => Some(e),
         Ok(f) if f.raw2bmx.is_none() => Some("raw2bmx não encontrado (sem ele não dá para gravar MXF)".into()),
@@ -89,6 +159,7 @@ fn estado() -> Result<Estado, String> {
             atualizado_em: ind.atualizado_em(),
             indexando: INDEXANDO.load(Ordering::Relaxed),
             ranking: ind.ranking(),
+            ia: ia_estado_txt(),
         })
     })
 }
@@ -123,24 +194,52 @@ fn cancelar_indice() {
 }
 
 #[tauri::command]
-async fn buscar(consulta: Consulta) -> Result<Resposta, String> {
+async fn buscar(consulta: Consulta, usar_ia: bool) -> Result<Resposta, String> {
     GERACAO_ONDAS.fetch_add(1, Ordering::SeqCst);
-    tauri::async_runtime::spawn_blocking(move || com_indice(|ind| ind.buscar(&consulta, Dicionario::embutido()).map_err(erro)))
-        .await
-        .map_err(erro)?
-}
-
-#[tauri::command]
-fn bibliotecas() -> Result<Vec<motor::indice::Contagem>, String> {
-    com_indice(|ind| ind.bibliotecas().map_err(erro))
-}
-
-#[tauri::command]
-fn votar(caminho: String, voto: i8) -> Result<Ranking, String> {
-    com_indice(|ind| {
-        ind.votar(&caminho, voto).map_err(erro)?;
-        Ok(ind.ranking())
+    tauri::async_runtime::spawn_blocking(move || {
+        com_indice(|ind| {
+            // termos da IA que já estão guardados (os novos chegam por `ia_termos`)
+            let termos = if usar_ia { motor::ia::termos_guardados(ind, &consulta.texto) } else { None };
+            ind.buscar_com_ia(&consulta, Dicionario::embutido(), termos.as_ref()).map_err(erro)
+        })
     })
+    .await
+    .map_err(erro)?
+}
+
+/// Pede à IA os termos de uma busca e guarda. Devolve `false` se a IA não estiver pronta.
+#[tauri::command]
+async fn ia_termos(texto: String) -> Result<bool, String> {
+    let Some(ia) = ia() else { return Ok(false) };
+    tauri::async_runtime::spawn_blocking(move || {
+        if com_indice(|ind| Ok(motor::ia::termos_guardados(ind, &texto).is_some()))? {
+            return Ok(true);
+        }
+        let Some(chave) = motor::ia::chave_busca(&texto) else { return Ok(false) };
+        // a IA responde fora do índice, para a busca não ficar travada esperando
+        let t = ia.termos_busca(&texto, Dicionario::embutido()).map_err(erro)?;
+        let v = serde_json::to_string(&t).map_err(erro)?;
+        com_indice(|ind| ind.ia_guardar(&chave, &v).map_err(erro))?;
+        Ok(true)
+    })
+    .await
+    .map_err(erro)?
+}
+
+#[tauri::command]
+async fn bibliotecas() -> Result<Vec<motor::indice::Contagem>, String> {
+    fora(|| com_indice(|ind| ind.bibliotecas().map_err(erro))).await?
+}
+
+#[tauri::command]
+async fn votar(caminho: String, voto: i8) -> Result<Ranking, String> {
+    fora(move || {
+        com_indice(|ind| {
+            ind.votar(&caminho, voto).map_err(erro)?;
+            Ok(ind.ranking())
+        })
+    })
+    .await?
 }
 
 #[derive(Serialize, Clone)]
@@ -190,26 +289,54 @@ async fn previa(app: tauri::AppHandle, caminho: String) -> Result<String, String
 }
 
 #[tauri::command]
-fn pasta_existe(pasta: String) -> bool {
-    Path::new(&pasta).is_dir()
+async fn pasta_existe(pasta: String) -> bool {
+    fora(move || Path::new(&pasta).is_dir()).await.unwrap_or(false)
 }
 
 #[tauri::command]
-fn subpastas(pasta: String) -> Vec<String> {
-    motor::envio::subpastas(Path::new(&pasta))
+async fn subpastas(pasta: String) -> Vec<String> {
+    fora(move || motor::envio::subpastas(Path::new(&pasta))).await.unwrap_or_default()
 }
 
 #[tauri::command]
-fn criar_subpasta(pasta: String, nome: String) -> Result<String, String> {
-    let nome = motor::nomes::seguro(&nome);
-    std::fs::create_dir_all(Path::new(&pasta).join(&nome)).map_err(erro)?;
-    Ok(nome)
+async fn criar_subpasta(pasta: String, nome: String) -> Result<String, String> {
+    fora(move || {
+        let nome = motor::nomes::seguro(&nome);
+        std::fs::create_dir_all(Path::new(&pasta).join(&nome)).map_err(erro)?;
+        Ok(nome)
+    })
+    .await?
 }
 
 #[tauri::command]
-fn sugerir_nomes(nomes: Vec<String>, traduzir: bool, encurtar: bool) -> Vec<String> {
-    let d = Dicionario::embutido();
-    nomes.iter().map(|n| motor::nomes::sugerir(n, traduzir, encurtar, d)).collect()
+async fn sugerir_nomes(nomes: Vec<String>, descricoes: Option<Vec<String>>, traduzir: bool, encurtar: bool, usar_ia: bool) -> Vec<String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let d = Dicionario::embutido();
+        let ia = if traduzir && usar_ia { ia() } else { None };
+        nomes
+            .iter()
+            .enumerate()
+            .map(|(k, n)| {
+                let desc = descricoes.as_ref().and_then(|v| v.get(k)).cloned().unwrap_or_default();
+                let desc: String = desc.chars().take(160).collect();
+                let Some(ia) = &ia else { return motor::nomes::sugerir(n, traduzir, encurtar, d) };
+                let chave = motor::ia::chave_nome(n, &desc, encurtar);
+                if let Some(v) = com_indice(|ind| Ok(ind.ia_lembrar(&chave))).ok().flatten() {
+                    return v;
+                }
+                match ia.nome(n, &desc, encurtar, d) {
+                    Ok(v) => {
+                        let v = motor::nomes::seguro(&v);
+                        let _ = com_indice(|ind| ind.ia_guardar(&chave, &v).map_err(erro));
+                        v
+                    }
+                    Err(_) => motor::nomes::sugerir(n, traduzir, encurtar, d),
+                }
+            })
+            .collect()
+    })
+    .await
+    .unwrap_or_default()
 }
 
 #[derive(Serialize, Clone)]
@@ -283,6 +410,7 @@ pub fn run() {
             indexar,
             cancelar_indice,
             buscar,
+            ia_termos,
             bibliotecas,
             votar,
             ondas,
@@ -295,6 +423,18 @@ pub fn run() {
             cancelar_envio,
             icone_arraste
         ])
-        .run(tauri::generate_context!())
-        .expect("erro ao iniciar o aplicativo");
+        .setup(|app| {
+            abrir_ia(app.handle());
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("erro ao iniciar o aplicativo")
+        .run(|_app, ev| {
+            // fecha a IA junto com o app
+            if let tauri::RunEvent::Exit = ev {
+                if let Ok(mut g) = IA.lock() {
+                    g.take();
+                }
+            }
+        });
 }

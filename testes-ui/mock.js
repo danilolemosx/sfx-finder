@@ -1,5 +1,5 @@
 // Tauri falso para testar a interface no navegador, sem o app.
-// Cenas pela URL: ?cena=principal | primeira | lendo | sem-destino | vazio | convertendo | ordem
+// Cenas pela URL: ?cena=principal | primeira | lendo | sem-destino | vazio | convertendo | ordem | ia-pensando
 "use strict";
 (function () {
   const cena = new URLSearchParams(location.search).get("cena") || "principal";
@@ -43,6 +43,7 @@
   }
 
   class Channel { constructor() { this.onmessage = null; } }
+  let iaFeita = false;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   async function invoke(cmd, args) {
@@ -58,7 +59,8 @@
         const conta = {};
         SONS.forEach((s) => { conta[s.biblioteca] = (conta[s.biblioteca] || 0) + 1; });
         return {
-          total: 214, sons: SONS, traducoes: c.texto.includes("porta") ? ["door slam", "door knock"] : [],
+          total: 214, sons: SONS, ia: !!(args.usarIa && iaFeita),
+          traducoes: args.usarIa && iaFeita ? ["door slam", "door bang", "door knock", "door close hard", "door shut"] : c.texto.includes("porta") ? ["door slam", "door knock"] : [],
           bibliotecas: [["Sony Pictures Sound Effects Series", 48], ["Sound Ideas", 41], ["BBC Sound Effects (completo MP3)", 37], ["Warner Bros. Sound Effects Library", 29], ["Valentino Production", 22], ["AKAI Sound Effects", 14], ["SoundEffectsFactory", 9], ["00_INBOX", 1]]
             .map(([b, n]) => ({ grupo: b === "00_INBOX" ? "00_INBOX" : "01_BIBLIOTECAS", biblioteca: b === "00_INBOX" ? "" : b, n })),
         };
@@ -70,10 +72,12 @@
         }
         return null;
       case "sugerir_nomes": {
-        const tab = { "Door Metal Slam 02": "Porta Metal Batendo", "Door Close Slam": "Porta Fecha Batendo", "Car Door Open And Slam": "Carro Porta Abre", "07027096 Church Door Interior, Slams, bolts lock door": "Igreja Porta Interno" };
+        if (args.usarIa) await sleep(cena === "ia-pensando" ? 60000 : 30);
+        const tab = { "Door Metal Slam 02": "Porta de Metal Batendo", "Door Close Slam": "Porta Fecha Batendo", "Car Door Open And Slam": "Carro Porta Abre", "07027096 Church Door Interior, Slams, bolts lock door": "Igreja Porta Interno" };
         return args.nomes.map((n) => (args.traduzir ? tab[n] || n : n));
       }
       case "votar": return ESTADO.ranking;
+      case "ia_termos": await sleep(cena === "ia-pensando" ? 60000 : 50); iaFeita = true; return true;
       case "pasta_existe": return cena !== "sem-destino";
       case "subpastas": return ["ARMAS", "LUTA", "MULTIDAO", "PORTAS", "VENTO"];
       case "criar_subpasta": return args.nome;

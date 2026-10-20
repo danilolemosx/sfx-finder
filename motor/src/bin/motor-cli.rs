@@ -153,7 +153,7 @@ fn main() -> ExitCode {
                 let v: Vec<_> = motor::VELOCIDADES.iter().map(|f| serde_json::json!({ "fps": f, "rotulo": f.rotulo() })).collect();
                 println!("{}", serde_json::json!({ "formatos": motor::FORMATOS, "velocidades": v, "versao": env!("CARGO_PKG_VERSION"), "erro": null,
                     "banco": "/Volumes/INSIDE_10TB/03_BIBLIOTECA DE EDIÇÃO/SFX", "bancoExiste": true, "total": 62353, "atualizadoEm": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0),
-                    "indexando": false, "ranking": { "gostei": 38, "naoGostei": 11, "usados": 126 } }));
+                    "indexando": false, "ia": "pronta", "ranking": { "gostei": 38, "naoGostei": 11, "usados": 126 } }));
                 return ExitCode::SUCCESS;
             }
             "-h" | "--help" => {

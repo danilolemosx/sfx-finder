@@ -235,3 +235,8 @@ input { font: inherit; color: inherit; background: none; border: none; outline: 
 .boas .linha span:last-child { color: var(--tinta2); font-weight: 500; }
 .boas-botoes { display: flex; gap: 8px; justify-content: flex-end; }
 .boas-botoes .mini { padding: 6px 12px; }
+
+/* IA */
+.selo-ia { display: inline-block; background: var(--tinta); color: var(--papel); font-size: 10px; font-weight: 800; letter-spacing: 1px; border-radius: 9px; padding: 1px 7px; margin-right: 4px; vertical-align: 1px; }
+.item input.pensando { color: var(--tinta2); font-style: italic; font-weight: 600; }
+.boas .chk { font-size: 12.5px; }

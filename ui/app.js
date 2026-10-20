@@ -26,10 +26,13 @@ const juntar = (a, b) => (a.endsWith("/") || a.endsWith("\\") ? a + b : a + (a.i
 /** "01_BIBLIOTECAS" → "BIBLIOTECAS" */
 const rotuloGrupo = (g) => (g ? g.replace(/^\d+[\s_-]*/, "").replace(/_/g, " ") || g : "Soltos");
 
+/** Espera no máximo `ms`; se o disco não responder, segue com `padrao` (a pasta pode estar num HD dormindo). */
+const comTempo = (p, ms, padrao) => Promise.race([p.catch(() => padrao), new Promise((ok) => setTimeout(() => ok(padrao), ms))]);
+
 // ---------- preferências (lembradas entre aberturas) ----------
 const PADRAO = {
   destino: null, tema: null, acao: "converter", formato: "wav", taxa: 48000, bits: 24, kbps: {}, fps: { num: 25, den: 1, drop: false },
-  traduzir: true, encurtar: true, origem: true, repetir: false, ordem: null,
+  traduzir: true, encurtar: true, origem: true, repetir: false, ordem: null, ia: true,
   filtros: { durMax: null, durMin: null, semPerda: false, canais: null, gosto: "todos" },
 };
 let pref = structuredClone(PADRAO);
@@ -65,12 +68,23 @@ function consulta() {
   };
 }
 
-async function buscar() {
+const usarIa = () => !!pref.ia && est.ia === "pronta";
+let iaPensando = false;
+async function buscar(depoisDaIa = false) {
   const meu = ++pedido;
   const c = consulta();
   let r;
-  try { r = await invoke("buscar", { consulta: c }); } catch (e) { aviso(`Erro na busca: ${e}`); return; }
+  try { r = await invoke("buscar", { consulta: c, usarIa: usarIa() }); } catch (e) { aviso(`Erro na busca: ${e}`); return; }
   if (meu !== pedido) return;
+  // a IA ainda não conhece esta busca: mostra o resultado do dicionário e pede a ela em seguida
+  iaPensando = !depoisDaIa && usarIa() && !r.ia && /[\p{L}\p{N}]/u.test(c.texto.replace(/(^|\s)-\S+/g, ""));
+  if (iaPensando) {
+    invoke("ia_termos", { texto: c.texto }).then((ok) => {
+      if (meu !== pedido) return;
+      iaPensando = false;
+      if (ok) buscar(true); else renderDica();
+    }).catch(() => { if (meu === pedido) { iaPensando = false; renderDica(); } });
+  }
   const antes = sel >= 0 ? resp.sons[sel]?.caminho : null;
   resp = r;
   sel = antes ? resp.sons.findIndex((s) => s.caminho === antes) : -1;
@@ -86,7 +100,10 @@ function buscarDepois() { clearTimeout(tBusca); tBusca = setTimeout(buscar, 220)
 
 function renderDica() {
   const d = resp.traducoes || [];
-  $("#dica").innerHTML = d.length ? `→ buscando também <b>${d.map(esc).join(" · ")}</b>` : "";
+  const selo = `<span class="selo-ia" title="IA local (Qwen), sem internet">✦ IA</span>`;
+  if (iaPensando) $("#dica").innerHTML = `${selo} pensando…${d.length ? ` · <b>${d.map(esc).join(" · ")}</b>` : ""}`;
+  else if (resp.ia) $("#dica").innerHTML = `${selo} buscando também <b>${d.map(esc).join(" · ")}</b>`;
+  else $("#dica").innerHTML = d.length ? `→ buscando também <b>${d.map(esc).join(" · ")}</b>` : "";
   const NOMES = { nome: "nome", duracao: "duração", formato: "formato", gosto: "gosto" };
   const o = pref.ordem;
   const ordem = o ? `ordem: <i>${NOMES[o.coluna]} ${o.desc ? "decrescente" : "crescente"}</i> · <button class="link" id="ordem-normal">normal</button>` : `ordem: <i>gostei primeiro, depois qualidade</i>`;
@@ -572,16 +589,20 @@ async function votar(i, v) {
 async function sugerir(itens) {
   if (!itens.length) return;
   try {
-    const nomes = await invoke("sugerir_nomes", { nomes: itens.map((i) => i.original), traduzir: !!pref.traduzir, encurtar: !!pref.encurtar });
-    itens.forEach((it, k) => { if (!it.editado) it.nome = nomes[k]; });
-  } catch (_) { itens.forEach((it) => { if (!it.editado) it.nome = it.original; }); }
+    const ia = usarIa() && pref.traduzir;
+    if (ia) { itens.forEach((it) => { if (!it.editado) it.pensando = true; }); renderCesta(); }
+    const nomes = await invoke("sugerir_nomes", { nomes: itens.map((i) => i.original), descricoes: itens.map((i) => i.meta || ""), traduzir: !!pref.traduzir, encurtar: !!pref.encurtar, usarIa: ia });
+    itens.forEach((it, k) => { if (!it.editado) it.nome = nomes[k]; it.pensando = false; });
+  } catch (_) { itens.forEach((it) => { if (!it.editado) it.nome = it.original; it.pensando = false; }); }
 }
 async function alternarCesta(s) {
   const k = cesta.findIndex((c) => c.caminho === s.caminho);
   if (k >= 0) cesta.splice(k, 1);
   else {
-    const it = { caminho: s.caminho, original: s.nome, ext: s.ext, dur: s.dur, biblioteca: s.biblioteca || rotuloGrupo(s.grupo), nome: s.nome, editado: false, trecho: s === somSel() && trecho ? [...trecho] : null };
+    const it = { caminho: s.caminho, original: s.nome, meta: s.meta, ext: s.ext, dur: s.dur, biblioteca: s.biblioteca || rotuloGrupo(s.grupo), nome: s.nome, editado: false, trecho: s === somSel() && trecho ? [...trecho] : null };
     cesta.push(it);
+    resp.sons.forEach((x, i) => { if (x.caminho === s.caminho) atualizarLinha(i); });
+    renderCesta();
     await sugerir([it]);
   }
   resp.sons.forEach((x, i) => { if (x.caminho === s.caminho) atualizarLinha(i); });
@@ -596,7 +617,7 @@ function renderCesta() {
       const d = it.trecho ? `${virgula(it.trecho[1] - it.trecho[0])} s ✂` : dur(it.dur);
       const de = it.estado === "erro" ? esc(it.msg) : `← ${esc(it.original)}.${esc(it.ext)} · ${esc(it.biblioteca)}`;
       const barra = it.estado === "indo" ? `<div class="barrinha"><i style="width:${Math.round((it.p || 0) * 100)}%"></i></div>` : "";
-      return `<div class="item ${it.estado === "erro" ? "erro" : ""}" data-k="${k}"><div style="min-width:0"><input value="${esc(it.nome)}" class="${it.editado ? "edit" : ""}" spellcheck="false" ${enviando ? "disabled" : ""}><div class="de" title="${esc(it.caminho)}">${de}</div></div><span class="d tab" title="${it.trecho ? "só o trecho marcado" : ""}">${d}</span><button class="x" title="Tirar da cesta">✕</button>${barra}</div>`;
+      return `<div class="item ${it.estado === "erro" ? "erro" : ""}" data-k="${k}"><div style="min-width:0"><input value="${esc(it.pensando ? "✦ pensando…" : it.nome)}" class="${it.editado ? "edit" : ""} ${it.pensando ? "pensando" : ""}" spellcheck="false" ${enviando ? "disabled" : ""}><div class="de" title="${esc(it.caminho)}">${de}</div></div><span class="d tab" title="${it.trecho ? "só o trecho marcado" : ""}">${d}</span><button class="x" title="Tirar da cesta">✕</button>${barra}</div>`;
     }).join("");
   }
   $("#esvaziar").disabled = enviando;
@@ -608,7 +629,9 @@ $("#itens").addEventListener("input", (e) => {
   const it = cesta[+inp.closest(".item").dataset.k];
   it.nome = inp.value;
   it.editado = true;
+  it.pensando = false;
   inp.classList.add("edit");
+  inp.classList.remove("pensando");
 });
 $("#itens").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 $("#itens").addEventListener("click", (e) => {
@@ -627,8 +650,11 @@ $("#esvaziar").addEventListener("click", () => {
 // destino
 function pastaFinal() { return pref.destino ? (pref.tema ? juntar(pref.destino, pref.tema) : pref.destino) : null; }
 async function carregarTemas() {
-  temas = pref.destino ? await invoke("subpastas", { pasta: pref.destino }).catch(() => []) : [];
-  if (pref.tema && !temas.includes(pref.tema)) { pref.tema = null; salvar(); }
+  const lidas = pref.destino ? await comTempo(invoke("subpastas", { pasta: pref.destino }), 3000, null) : [];
+  temas = lidas || [];
+  // se o disco não respondeu, mantém a subpasta escolhida
+  if (lidas && pref.tema && !temas.includes(pref.tema)) { pref.tema = null; salvar(); }
+  if (!lidas && pref.tema) temas = [pref.tema];
   renderDestino();
 }
 function renderDestino() {
@@ -896,6 +922,16 @@ $("#atualizar").addEventListener("click", () => {
   if (est.banco) indexar(est.banco);
 });
 
+// a IA abre em segundo plano junto com o app: quando ficar pronta, refaz a busca já com ela
+async function vigiarIa() {
+  while (est.ia === "abrindo") {
+    await new Promise((ok) => setTimeout(ok, 1500));
+    try { est = { ...est, ...(await invoke("estado")) }; } catch (_) { break; }
+  }
+  if (!$("#ajustes").classList.contains("oculto")) renderAjIa();
+  if (usarIa() && consulta().texto) buscar();
+}
+
 // ajustes (engrenagem)
 function abrirAjustes() {
   const b = $("#aj-banco");
@@ -903,9 +939,17 @@ function abrirAjustes() {
   b.innerHTML = est.banco ? `<span>${esc(nomeDaPasta(est.banco))} <span class="pasta">${esc(paiDaPasta(est.banco))}</span></span><span class="seta">trocar</span>` : "+ ESCOLHER A PASTA DO BANCO";
   $("#aj-info").textContent = est.banco ? `${milhar(est.total)} sons · ${quando(est.atualizadoEm)}. Trocar de banco faz o app ler a pasta nova do zero; o seu gosto (👍 👎) continua guardado.` : "";
   $("#aj-atualizar").disabled = !est.banco || indexando;
+  renderAjIa();
   $("#versao").textContent = `SFX Finder ${est.versao || ""}`;
   $("#ajustes").classList.remove("oculto");
 }
+function renderAjIa() {
+  const e = est.ia || "";
+  const txt = e === "pronta" ? "pronta" : e === "abrindo" ? "abrindo…" : e ? `não abriu (${e})` : "—";
+  $("#aj-ia").innerHTML = `<i></i>Usar a IA na busca e nos nomes <small>(Qwen, no computador, sem internet · ${esc(txt)})</small>`;
+  $("#aj-ia").classList.toggle("on", !!pref.ia);
+}
+$("#aj-ia").addEventListener("click", () => { pref.ia = !pref.ia; salvar(); renderAjIa(); buscar(); });
 $("#engr").addEventListener("click", abrirAjustes);
 $("#aj-fechar").addEventListener("click", () => $("#ajustes").classList.add("oculto"));
 $("#aj-banco").addEventListener("click", async () => { $("#ajustes").classList.add("oculto"); if (!indexando) escolherBanco(); });
@@ -954,9 +998,11 @@ addEventListener("resize", () => { for (const i of visiveis) desenharMini($(`can
   if (est.erro) dialogo.message(`O SFX Finder não encontrou um programa de que precisa:\n\n${est.erro}`, { title: "SFX Finder", kind: "error" }).catch(() => {});
   if (!est.formatos.find((f) => f.id === pref.formato)) pref.formato = "wav";
   renderAcao();
-  if (pref.destino && !(await invoke("pasta_existe", { pasta: pref.destino }).catch(() => false))) { pref.destino = null; pref.tema = null; salvar(); }
+  // pasta de destino sumiu: volta sem destino (se o disco só demorar a responder, mantém)
+  if (pref.destino && (await comTempo(invoke("pasta_existe", { pasta: pref.destino }), 3000, true)) === false) { pref.destino = null; pref.tema = null; salvar(); }
   await carregarTemas();
   renderTopo();
+  vigiarIa();
   if (!est.banco || !est.bancoExiste) {
     $("#boas").classList.remove("oculto");
     if (est.banco && !est.bancoExiste) $("#boas p").textContent = `A pasta do banco (${est.banco}) não foi encontrada. O HD está ligado? Escolha a pasta de novo.`;

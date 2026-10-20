@@ -12,7 +12,7 @@ cargo run -q --manifest-path "$raiz/Cargo.toml" -p motor --bin motor-cli -- --js
 printf 'window.__ESTADO__ = %s;\n' "$(cat "$trabalho/estado.json")" > "$trabalho/estado.js"
 sed -i.bak 's#<script src="app.js"></script>#<script src="estado.js"></script><script src="mock.js"></script><script src="app.js"></script>#' "$trabalho/index.html"
 mkdir -p "$saida"
-for cena in principal primeira lendo sem-destino vazio convertendo ordem; do
+for cena in principal primeira lendo sem-destino vazio convertendo ordem ia-pensando; do
   "$chrome" --headless=new --hide-scrollbars --force-device-scale-factor=2 --window-size=1280,800 \
     --virtual-time-budget=4000 --screenshot="$saida/$cena.png" "file://$trabalho/index.html?cena=$cena" >/dev/null 2>&1
   erros="$("$chrome" --headless=new --virtual-time-budget=4000 --dump-dom "file://$trabalho/index.html?cena=$cena" 2>/dev/null | grep -o 'data-erros="[^"]*"' | tr '\n' ' ' || true)"

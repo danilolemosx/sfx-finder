@@ -34,14 +34,14 @@
     "targets": [
       "app",
       "dmg",
-      "msi",
       "nsis"
     ],
     "category": "Music",
     "externalBin": [
       "binaries/ffmpeg",
       "binaries/ffprobe",
-      "binaries/raw2bmx"
+      "binaries/raw2bmx",
+      "binaries/llama-server"
     ],
     "shortDescription": "Busca e organiza bancos de efeitos sonoros",
     "icon": [
@@ -64,6 +64,9 @@
           "PortugueseBR"
         ]
       }
+    },
+    "resources": {
+      "modelo/qwen.gguf": "modelo/qwen.gguf"
     }
   }
 }
