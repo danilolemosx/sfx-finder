@@ -223,6 +223,8 @@ pub struct Resposta {
     pub bibliotecas: Vec<Contagem>,
     /// Traduções usadas na busca ("door slam · door bang").
     pub traducoes: Vec<String>,
+    /// Os termos vieram da IA.
+    pub ia: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -249,7 +251,74 @@ fn termo(p: &str, prefixo: bool) -> String {
 }
 
 /// Monta a expressão do FTS5: cada grupo vira (palavra* OR tradução OR …), unidos por AND; "-palavra" exclui.
+/// Expressão do FTS5 para uma lista de palavras em inglês, todas obrigatórias ("rusty hinge" → rusty AND hinge).
+fn todas(t: &str) -> Option<String> {
+    let ps: Vec<String> = palavras(t).into_iter().filter(|p| !VAZIAS.contains(&p.as_str())).map(|p| termo(&p, false)).collect();
+    (!ps.is_empty()).then(|| format!("({})", ps.join(" AND ")))
+}
+
+/// A busca pronta para o FTS5.
+#[derive(Debug, Clone, Default)]
+pub struct Expressao {
+    /// Tudo o que entra na busca.
+    pub tudo: Option<String>,
+    /// Só o que bate com as palavras digitadas (e a tradução literal da IA): vem antes na lista.
+    pub principal: Option<String>,
+    /// O que mostrar ao lado da busca ("door slam · door knock").
+    pub dicas: Vec<String>,
+}
+
+/// Monta a busca: dicionário e, se houver, os termos da IA (unidos por OR); "-palavra" exclui de tudo.
+pub fn expressao_ia(texto: &str, dic: &Dicionario, ia: Option<&crate::ia::Termos>) -> Expressao {
+    let (base, dicas_dic) = expressao_sem_negativos(texto, dic);
+    let neg: String = texto
+        .split_whitespace()
+        .filter_map(|t| t.strip_prefix('-').filter(|n| !n.is_empty()))
+        .flat_map(palavras)
+        .map(|n| format!(" NOT {}", termo(&n, true)))
+        .collect();
+    let Some(base) = base else { return Expressao::default() };
+    let mut principal = vec![format!("({base})")];
+    let mut extras = Vec::new();
+    let mut dicas = dicas_dic;
+    if let Some(t) = ia {
+        principal.extend(todas(&t.ingles));
+        // cada termo inteiro e, nos de 3 palavras ou mais, também cada par ("old gate creak" → "gate creak"…),
+        // para não perder sons que só têm parte das palavras
+        let mut add = |e: Option<String>| {
+            if let Some(e) = e {
+                if !principal.contains(&e) && !extras.contains(&e) {
+                    extras.push(e);
+                }
+            }
+        };
+        for x in t.termos.iter().chain(std::iter::once(&t.ingles)) {
+            add(todas(x));
+            let ps: Vec<String> = palavras(x).into_iter().filter(|p| !VAZIAS.contains(&p.as_str())).collect();
+            if ps.len() >= 3 {
+                for i in 0..ps.len() {
+                    for j in i + 1..ps.len() {
+                        add(todas(&format!("{} {}", ps[i], ps[j])));
+                    }
+                }
+            }
+        }
+        if !t.termos.is_empty() {
+            dicas = t.termos.iter().take(5).cloned().collect();
+        }
+    }
+    let p = principal.join(" OR ");
+    let tudo = if extras.is_empty() { p.clone() } else { format!("{p} OR {}", extras.join(" OR ")) };
+    Expressao { tudo: Some(format!("({tudo}){neg}")), principal: Some(format!("({p}){neg}")), dicas }
+}
+
+/// Só o dicionário (como antes da IA), com os negativos.
 pub fn expressao(texto: &str, dic: &Dicionario) -> (Option<String>, Vec<String>) {
+    let e = expressao_ia(texto, dic, None);
+    (e.tudo, e.dicas)
+}
+
+fn expressao_sem_negativos(texto: &str, dic: &Dicionario) -> (Option<String>, Vec<String>) {
     let mut pos: Vec<String> = Vec::new();
     let mut neg: Vec<String> = Vec::new();
     for t in texto.split_whitespace() {
@@ -275,10 +344,8 @@ pub fn expressao(texto: &str, dic: &Dicionario) -> (Option<String>, Vec<String>)
     if partes.is_empty() {
         return (None, Vec::new());
     }
-    let mut expr = partes.join(" AND ");
-    for n in neg {
-        expr.push_str(&format!(" NOT {}", termo(&n, true)));
-    }
+    let _ = neg;
+    let expr = partes.join(" AND ");
     // "door slam · door knock": a 1ª tradução de cada palavra; depois a 2ª da última palavra que tiver outra
     let mut dicas = Vec::new();
     if !traducoes.is_empty() {
@@ -333,6 +400,7 @@ impl Indice {
              create index if not exists f_bib on f(grupo, biblioteca);
              create virtual table if not exists busca using fts5(nome, pasta, meta, tokenize = 'porter unicode61 remove_diacritics 2');
              create table if not exists votos (caminho text primary key, voto int not null);
+             create table if not exists ia (chave text primary key, valor text not null);
              create table if not exists usos (caminho text not null, destino text not null, quando int not null);
              create index if not exists usos_c on usos(caminho);",
         )?;
@@ -496,6 +564,16 @@ impl Indice {
         Ok(linhas.collect::<rusqlite::Result<Vec<_>>>()?)
     }
 
+    /// Resposta da IA guardada (para não perguntar duas vezes a mesma coisa).
+    pub fn ia_lembrar(&self, chave: &str) -> Option<String> {
+        self.con.query_row("select valor from ia where chave = ?", [chave], |r| r.get(0)).optional().ok().flatten()
+    }
+
+    pub fn ia_guardar(&self, chave: &str, valor: &str) -> Result<()> {
+        self.con.execute("insert or replace into ia values (?, ?)", [chave, valor])?;
+        Ok(())
+    }
+
     pub fn votar(&self, caminho: &str, voto: i8) -> Result<()> {
         if voto == 0 {
             self.con.execute("delete from votos where caminho = ?", [caminho])?;
@@ -530,7 +608,14 @@ impl Indice {
 
     /// Busca com os filtros. Ordem: 👍 primeiro, 👎 por último; depois sem perda antes de MP3; depois relevância.
     pub fn buscar(&self, c: &Consulta, dic: &Dicionario) -> Result<Resposta> {
-        let (expr, traducoes) = expressao(&c.texto, dic);
+        self.buscar_com_ia(c, dic, None)
+    }
+
+    /// Busca usando também os termos que a IA deu para o texto.
+    pub fn buscar_com_ia(&self, c: &Consulta, dic: &Dicionario, ia: Option<&crate::ia::Termos>) -> Result<Resposta> {
+        let ex = expressao_ia(&c.texto, dic, ia);
+        let usou_ia = ia.is_some_and(|t| !t.termos.is_empty()) && ex.tudo.is_some();
+        let (expr, traducoes) = (ex.tudo.clone(), ex.dicas.clone());
         if expr.is_none() && c.lista.is_none() && c.biblioteca.is_none() && c.grupo.is_none() {
             return Ok(Resposta::default());
         }
@@ -609,6 +694,8 @@ impl Indice {
              from {de} {} order by {} limit ?",
             where_sql(&onde),
             match c.ordem {
+                // com a IA: primeiro o que bate com as palavras digitadas, depois os sinônimos dela
+                None if usou_ia => format!("{voto} desc, case when f.id in (select rowid from busca where busca match ?) then 0 else 1 end, {qual}, {relevancia}"),
                 None => format!("{voto} desc, {qual}, {relevancia}"),
                 Some(o) => {
                     let d = if o.desc { "desc" } else { "asc" };
@@ -622,6 +709,9 @@ impl Indice {
                 }
             }
         );
+        if c.ordem.is_none() && usou_ia {
+            args.push(ex.principal.clone().unwrap_or_default().into());
+        }
         args.push((c.limite.unwrap_or(500) as i64).into());
         let mut st = self.con.prepare(&sql)?;
         let linhas = st.query_map(rusqlite::params_from_iter(args.iter()), |r| {
@@ -646,7 +736,7 @@ impl Indice {
         for l in linhas {
             sons.push(l?);
         }
-        Ok(Resposta { total, sons, bibliotecas, traducoes })
+        Ok(Resposta { total, sons, bibliotecas, traducoes, ia: usou_ia })
     }
 }
 

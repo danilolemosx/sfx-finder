@@ -1,9 +1,10 @@
 #!/bin/bash
 # Compila os programas que vão embutidos no SFX Finder, sem dependências externas:
-#   ffmpeg e ffprobe (LGPL, com lame, opus e vorbis) e raw2bmx (MXF do Avid).
+#   ffmpeg e ffprobe (LGPL, com lame, opus e vorbis), raw2bmx (MXF do Avid) e llama-server
+#   (llama.cpp, MIT: roda a IA da busca e dos nomes).
 # Saída: app/binaries/<programa>-<alvo>[.exe], como o Tauri espera em bundle.externalBin.
 #
-# Uso: scripts/compilar-ferramentas.sh <alvo> [ffmpeg|bmx|tudo]
+# Uso: scripts/compilar-ferramentas.sh <alvo> [ffmpeg|bmx|llama|tudo]
 #   alvos: aarch64-apple-darwin, x86_64-apple-darwin (no Mac),
 #          x86_64-pc-windows-msvc (ffmpeg no MSYS2/MINGW64; bmx no Git Bash com Visual Studio),
 #          x86_64-unknown-linux-gnu
@@ -17,7 +18,7 @@ PREFIXO="$TRAB/prefixo"
 SAIDA="$RAIZ/app/binaries"
 mkdir -p "$TRAB/fontes" "$PREFIXO" "$SAIDA"
 
-FFMPEG=7.1.1; LAME=3.100; OPUS=1.5.2; OGG=1.3.5; VORBIS=1.3.7; BMX=1.6
+FFMPEG=7.1.1; LAME=3.100; OPUS=1.5.2; OGG=1.3.5; VORBIS=1.3.7; BMX=1.6; LLAMA=b11765
 # nome do arquivo → "url sha256" (sem array associativo: o bash do Mac é o 3.2)
 info_fonte() {
   case "$1" in
@@ -27,6 +28,7 @@ info_fonte() {
     libogg-$OGG.tar.gz) echo "https://downloads.xiph.org/releases/ogg/libogg-$OGG.tar.gz 0eb4b4b9420a0f51db142ba3f9c64b333f826532dc0f48c6410ae51f4799b664" ;;
     libvorbis-$VORBIS.tar.xz) echo "https://downloads.xiph.org/releases/vorbis/libvorbis-$VORBIS.tar.xz b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b" ;;
     bmx-$BMX.tar.gz) echo "https://github.com/bbc/bmx/archive/refs/tags/v$BMX.tar.gz 41f163965cb7fffcc022ad4a099c295b3699709ce2306ee89b713cfcfda3b25a" ;;
+    llama.cpp-$LLAMA.tar.gz) echo "https://github.com/ggml-org/llama.cpp/archive/refs/tags/$LLAMA.tar.gz 450d3b4cb6297049ef33fdf8ccb5a61cbbc0e0bd3acf9fe6d78f51efdeca9808" ;;
   esac
 }
 
@@ -53,23 +55,29 @@ CFLAGS_ALVO="-O2"
 HOST_ARGS=()
 FF_ARGS=()
 CMAKE_ARGS=()
+LLAMA_ARGS=()
 case "$ALVO" in
   aarch64-apple-darwin)
     CFLAGS_ALVO="-O2 -arch arm64 -mmacosx-version-min=11.0"
     HOST_ARGS=(--host=aarch64-apple-darwin)
     FF_ARGS=(--arch=arm64 --target-os=darwin --enable-cross-compile)
     CMAKE_ARGS=(-DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0)
+    LLAMA_ARGS=(-DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON)
     ;;
   x86_64-apple-darwin)
     CFLAGS_ALVO="-O2 -arch x86_64 -mmacosx-version-min=10.15"
     HOST_ARGS=(--host=x86_64-apple-darwin)
     FF_ARGS=(--arch=x86_64 --target-os=darwin --enable-cross-compile)
     CMAKE_ARGS=(-DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15)
+    # Mac Intel: só processador (AVX2, Macs de 2013 em diante)
+    LLAMA_ARGS=(-DGGML_METAL=OFF -DGGML_BLAS=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON)
     ;;
   x86_64-pc-windows-msvc)
     EXE=".exe"
     FF_ARGS=(--target-os=mingw32 --extra-ldflags=-static --pkg-config-flags=--static)
     CMAKE_ARGS=(-DBMX_SET_MSVC_RUNTIME=MT)
+    # Windows: processador (AVX2), sem OpenMP e com o runtime estático (não precisa de DLL do Visual Studio)
+    LLAMA_ARGS=(-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DGGML_OPENMP=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON)
     ;;
   x86_64-unknown-linux-gnu)
     CMAKE_ARGS=()
@@ -132,10 +140,25 @@ compilar_bmx() {
   cp "$(find "$b" -type f -name "mxf2raw$EXE" | head -1)" "$RAIZ/ferramentas-teste/mxf2raw-$ALVO$EXE"
 }
 
+compilar_llama() {
+  local s b
+  s="$(fonte llama.cpp-$LLAMA.tar.gz)"
+  b="$TRAB/build-llama"
+  rm -rf "$b"
+  # só o servidor, estático, sem rede externa (HTTPS/curl) e sem otimizar para a máquina que compila
+  cmake -S "$s" -B "$b" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DLLAMA_OPENSSL=OFF -DLLAMA_CURL=OFF \
+    -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TOOLS=ON -DGGML_NATIVE=OFF \
+    ${CMAKE_ARGS[@]+"${CMAKE_ARGS[@]}"} ${LLAMA_ARGS[@]+"${LLAMA_ARGS[@]}"}
+  cmake --build "$b" --config Release --parallel "$JOBS" --target llama-server
+  cp "$(find "$b" -type f -name "llama-server$EXE" | head -1)" "$SAIDA/llama-server-$ALVO$EXE"
+  strip "$SAIDA/llama-server-$ALVO$EXE" 2>/dev/null || true
+}
+
 case "$PARTE" in
   ffmpeg) compilar_ffmpeg ;;
   bmx) compilar_bmx ;;
-  tudo) compilar_ffmpeg; compilar_bmx ;;
+  llama) compilar_llama ;;
+  tudo) compilar_ffmpeg; compilar_bmx; compilar_llama ;;
   *) echo "parte desconhecida: $PARTE" >&2; exit 2 ;;
 esac
 ls -la "$SAIDA"

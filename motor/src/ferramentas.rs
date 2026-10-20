@@ -13,6 +13,8 @@ pub struct Ferramentas {
     pub ffmpeg: PathBuf,
     pub ffprobe: PathBuf,
     pub raw2bmx: Option<PathBuf>,
+    /// Servidor da IA (llama.cpp).
+    pub llama: Option<PathBuf>,
     pub encoders: Encoders,
 }
 
@@ -54,10 +56,11 @@ impl Ferramentas {
         let Some(ffmpeg) = achar("ffmpeg", pasta) else { bail!("ffmpeg não encontrado") };
         let Some(ffprobe) = achar("ffprobe", pasta) else { bail!("ffprobe não encontrado") };
         let raw2bmx = achar("raw2bmx", pasta);
+        let llama = achar("llama-server", pasta);
         let saida = comando(&ffmpeg).args(["-hide_banner", "-encoders"]).output().context("não foi possível rodar o ffmpeg")?;
         let lista = String::from_utf8_lossy(&saida.stdout);
         let tem = |n: &str| lista.lines().any(|l| l.split_whitespace().nth(1) == Some(n));
         let encoders = Encoders { libvorbis: tem("libvorbis"), libopus: tem("libopus") };
-        Ok(Ferramentas { ffmpeg, ffprobe, raw2bmx, encoders })
+        Ok(Ferramentas { ffmpeg, ffprobe, raw2bmx, llama, encoders })
     }
 }

@@ -37,8 +37,28 @@ fn indexar(pasta: &str) -> ExitCode {
     }
 }
 
+/// IA para os testes na linha de comando: llama-server das ferramentas e o modelo em app/modelo/qwen.gguf
+/// (ou SFXFINDER_MODELO).
+fn abrir_ia() -> Option<motor::ia::Ia> {
+    let ferr = Ferramentas::localizar(None).ok()?;
+    let servidor = ferr.llama?;
+    let modelo = std::env::var_os("SFXFINDER_MODELO").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("app/modelo/qwen.gguf"));
+    let t0 = std::time::Instant::now();
+    match motor::ia::Ia::iniciar(&servidor, &modelo) {
+        Ok(ia) => {
+            eprintln!("IA aberta em {:.1} s", t0.elapsed().as_secs_f64());
+            Some(ia)
+        }
+        Err(e) => {
+            eprintln!("sem IA: {e:#}");
+            None
+        }
+    }
+}
+
 fn buscar(args: &[String]) -> ExitCode {
     let mut c = motor::Consulta::default();
+    let com_ia = args.iter().any(|a| a == "--ia");
     let mut texto = Vec::new();
     let mut it = args.iter();
     while let Some(a) = it.next() {
@@ -47,6 +67,7 @@ fn buscar(args: &[String]) -> ExitCode {
             "--min" => c.dur_min = it.next().and_then(|v| v.parse().ok()),
             "--sem-perda" => c.so_sem_perda = true,
             "-n" => c.limite = it.next().and_then(|v| v.parse().ok()),
+            "--ia" => {}
             _ => texto.push(a.clone()),
         }
     }
@@ -59,10 +80,17 @@ fn buscar(args: &[String]) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    let ia = if com_ia { abrir_ia() } else { None };
+    let dic = motor::Dicionario::embutido();
     let t0 = std::time::Instant::now();
-    match ind.buscar(&c, motor::Dicionario::embutido()) {
+    let termos = ia.as_ref().and_then(|ia| motor::ia::termos_com_memoria(&ind, ia, &c.texto, dic).map_err(|e| eprintln!("IA: {e:#}")).ok());
+    let t_ia = t0.elapsed().as_millis();
+    match ind.buscar_com_ia(&c, dic, termos.as_ref()) {
         Ok(r) => {
             let ms = t0.elapsed().as_millis();
+            if let Some(t) = &termos {
+                println!("IA ({t_ia} ms): [{}] {}", t.ingles, t.termos.join(" · "));
+            }
             println!("{} encontrados em {ms} ms · também: {}", r.total, r.traducoes.join(" · "));
             for b in r.bibliotecas.iter().take(8) {
                 println!("  {:>5}  {} › {}", b.n, b.grupo, b.biblioteca);
@@ -87,8 +115,15 @@ fn main() -> ExitCode {
         Some("nome") => {
             let t = todos.iter().any(|a| a == "-t");
             let e = todos.iter().any(|a| a == "-e");
-            let nome: Vec<&str> = todos[1..].iter().filter(|a| !a.starts_with('-')).map(String::as_str).collect();
-            println!("{}", motor::nomes::sugerir(&nome.join(" "), t, e, motor::Dicionario::embutido()));
+            let ia = if todos.iter().any(|a| a == "--ia") { abrir_ia() } else { None };
+            // vários nomes separados por " ; "
+            let nomes: Vec<&str> = todos[1..].iter().filter(|a| !a.starts_with('-')).map(String::as_str).collect();
+            let junto = nomes.join(" ");
+            for n in junto.split(" ; ") {
+                let d = motor::Dicionario::embutido();
+                let via_ia = ia.as_ref().filter(|_| t).and_then(|ia| ia.nome(n, "", e, d).ok());
+                println!("{n}  →  {}", via_ia.unwrap_or_else(|| motor::nomes::sugerir(n, t, e, d)));
+            }
             return ExitCode::SUCCESS;
         }
         _ => {}

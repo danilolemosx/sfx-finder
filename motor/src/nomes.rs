@@ -30,12 +30,8 @@ pub fn seguro(nome: &str) -> String {
     if s.is_empty() { "Som".into() } else { s }
 }
 
-/// "07027096 Church Door Interior, Slams" → "Porta Igreja Interno" (traduzir + encurtar).
-pub fn sugerir(original: &str, traduzir: bool, encurtar: bool, dic: &Dicionario) -> String {
-    if !traduzir && !encurtar {
-        return seguro(original);
-    }
-    // palavras do nome (separando "DoorSlam" e "door_slam")
+/// Palavras de um nome de arquivo, separando "DoorSlam", "door_slam" e "Take2".
+pub fn palavras_do_nome(original: &str) -> Vec<String> {
     let mut brutas: Vec<String> = Vec::new();
     for parte in original.split(|c: char| !c.is_alphanumeric()) {
         let mut atual = String::new();
@@ -53,6 +49,15 @@ pub fn sugerir(original: &str, traduzir: bool, encurtar: bool, dic: &Dicionario)
             brutas.push(atual);
         }
     }
+    brutas
+}
+
+/// "07027096 Church Door Interior, Slams" → "Porta Igreja Interno" (traduzir + encurtar).
+pub fn sugerir(original: &str, traduzir: bool, encurtar: bool, dic: &Dicionario) -> String {
+    if !traduzir && !encurtar {
+        return seguro(original);
+    }
+    let brutas = palavras_do_nome(original);
     let mut saida: Vec<String> = Vec::new();
     for p in &brutas {
         let n = normalizar(p);

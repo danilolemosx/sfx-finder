@@ -769,6 +769,31 @@ porao: basement
 sotao: attic
 
 # adjetivos e intensidade
+abafado: muffled, dampened, suppressed, dull
+abafada: muffled, dampened, suppressed
+ecoando: echo, echoing, reverb
+eco: echo, reverb
+metalico: metallic, metal
+enferrujado: rusty, rust, squeaky
+rangente: creaky, creak, squeaky
+oco: hollow
+estridente: shrill, piercing, screech
+seco: dry, short, tight
+molhado: wet
+ritmado: rhythmic
+grosso: thick, heavy, deep
+fino: thin, high
+abrupto: sudden, sharp
+repentino: sudden
+crescente: rising, riser, build
+decrescente: falling, fade out
+assustador: scary, creepy, eerie
+sinistro: eerie, sinister, creepy, ominous
+misterioso: mysterious, eerie
+tenso: tense, tension, suspense
+calmo: calm, peaceful, quiet
+tranquilo: calm, peaceful, quiet
+caotico: chaotic, chaos
 forte: hard, heavy, loud, strong
 fraco: soft, light, weak
 suave: soft, gentle, light

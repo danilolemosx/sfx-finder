@@ -2,6 +2,18 @@
 # Formato: palavra em inglês: tradução. Plurais e verbos (doors, slamming, closed) são achados pela forma base.
 # Palavras sem tradução ficam como estão.
 
+# expressões de duas palavras (vêm antes das palavras soltas)
+fire engine: Caminhão de Bombeiro
+fire truck: Caminhão de Bombeiro
+thunder clap: Trovão
+car door: Porta de Carro
+gun shot: Tiro
+foot steps: Passos
+room tone: Ambiente de Sala
+cell phone: Celular
+police car: Viatura
+air raid: Sirene Antiaérea
+
 # casa e objetos
 door: Porta
 gate: Portão
@@ -215,7 +227,9 @@ click: Clique
 snap: Estalo
 crack: Estalo
 crackle: Estalido
-creak: Rangido
+creak: Rangendo
+creaky: Rangendo
+creaking: Rangendo
 squeak: Rangido
 hiss: Chiado
 sizzle: Chiado

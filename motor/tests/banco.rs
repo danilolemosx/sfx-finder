@@ -263,3 +263,31 @@ fn forma_de_onda() {
     assert!(prev.is_file());
     assert_eq!(motor::envio::previa(&ferr, &arq, &raiz.join("cache")).unwrap(), prev, "prévia reaproveitada");
 }
+
+/// IA de verdade (só roda quando há o llama-server nas ferramentas e o modelo em app/modelo/qwen.gguf).
+#[test]
+fn ia_entende_a_busca_e_da_nomes() {
+    let Some(servidor) = ferramentas().llama else { return eprintln!("sem llama-server: teste da IA pulado") };
+    let modelo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../app/modelo/qwen.gguf");
+    if !modelo.is_file() {
+        return eprintln!("sem o modelo: teste da IA pulado");
+    }
+    let ia = motor::ia::Ia::iniciar(&servidor, &modelo).unwrap();
+    let d = Dicionario::embutido();
+    let t = ia.termos_busca("gaveta abrindo", d).unwrap();
+    assert!(t.termos.iter().any(|x| x.contains("drawer")), "{t:?}");
+    let n = ia.nome("Gunshot_Pistol_9mm_Indoor_Muffled", "", true, d).unwrap();
+    assert!(n.to_lowercase().contains("tiro"), "{n}");
+
+    // a busca usa os termos da IA e guarda a resposta
+    let raiz = pasta("ia");
+    banco(&raiz);
+    som(&raiz.join("01_BIBLIOTECAS/X/Drawer Wood Open.wav"), 1.0, 1, &[]);
+    let mut ind = Indice::em_memoria().unwrap();
+    indexar(&mut ind, &raiz);
+    let termos = motor::ia::termos_com_memoria(&ind, &ia, "gaveta abrindo", d).unwrap();
+    assert!(motor::ia::termos_guardados(&ind, "gaveta  abrindo").is_some());
+    let r = ind.buscar_com_ia(&Consulta { texto: "gaveta abrindo".into(), ..Default::default() }, d, Some(&termos)).unwrap();
+    assert!(r.ia);
+    assert_eq!(nomes(&r), ["Drawer Wood Open"]);
+}
