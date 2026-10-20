@@ -1,0 +1,81 @@
+SFX FINDER 0.1.0 — busca e organiza o seu banco de efeitos sonoros
+==================================================================
+
+O QUE É
+O SFX Finder acha os sons do seu banco de efeitos (SFX) em segundos, em português ou em
+inglês, deixa você ouvir na hora e leva os escolhidos para uma pasta temática do projeto,
+copiados como estão ou convertidos (WAV, MXF do Avid, AIFF, MP3 e outros).
+Roda no computador, sem internet e sem instalar mais nada.
+
+
+COMO USAR
+1. Na primeira vez, escolha a pasta do seu banco de sons. O app lê tudo uma vez e guarda
+   um índice (um banco de 60 mil sons leva uns 12 minutos num HD). Você já pode buscar
+   enquanto ele lê. Nas próximas vezes ele abre na hora.
+2. Digite no alto o que procura: "porta batendo", "chuva forte", "door slam", "whoosh"…
+   Em português ele também busca em inglês. Para excluir uma palavra, use o menos:
+   "door slam -car".
+3. Ouça: ESPAÇO toca e para, ↑ ↓ troca de som. Arraste na forma de onda grande para
+   marcar só um trecho.
+4. Marque o que gostou com 👍 e o que não gostou com 👎. Os 👍 sobem nas próximas buscas
+   e os 👎 descem. Os sons que você já usou ganham um pontinho vermelho.
+5. ENTER (ou o +) põe o som na cesta, à direita. O nome novo aparece traduzido e/ou
+   encurtado; clique nele para mudar.
+6. Escolha a pasta de destino e, se quiser, uma subpasta temática (PORTAS, ARMAS…
+   ou + NOVA). Escolha COPIAR ou CONVERTER (e o formato) e clique no botão vermelho.
+
+
+BOM SABER
+- Filtros no alto: duração, qualidade (esconder MP3), canais e gosto.
+  À esquerda, clique numa biblioteca para ver só os sons dela.
+- Clique no título de uma coluna (Som, Dur., Formato, Gosto) para ordenar: o 1º clique
+  ordena do menor para o maior, o 2º ao contrário, e o 3º volta à ordem normal.
+- Arraste um som da lista direto para uma pasta do Finder ou para um bin do Avid.
+- MXF do Avid: sai a 48 kHz, um arquivo por canal, que é como o Avid usa.
+- ORIGEM.txt: fica na pasta de destino e diz de onde veio cada som.
+- O SFX Finder nunca apaga nem mexe no seu banco. Na pasta de destino ele nunca
+  sobrescreve: se o nome já existir, o novo ganha _2, _3… no fim.
+- Colocou sons novos no banco? Clique em "atualizar" no alto: ele lê só o que mudou.
+- Para trocar de banco, use a engrenagem (⚙). O seu 👍/👎 continua guardado.
+
+
+QUAL ARQUIVO BAIXAR
+- Mac com chip Apple (M1, M2, M3, M4): SFX.Finder_0.1.0_aarch64.dmg
+- Mac com processador Intel:          SFX.Finder_0.1.0_x64.dmg
+- Windows 10/11:                      SFX.Finder_0.1.0_x64-setup.exe
+
+Não sabe qual é o seu Mac? Menu Apple () > Sobre Este Mac.
+"Chip Apple M..." = aarch64. "Processador Intel" = x64.
+
+
+INSTALAR NO MAC
+Abra o .dmg e arraste o SFX Finder para a pasta Aplicativos.
+O app não é assinado pela Apple, então o Mac reclama na primeira vez. É normal:
+
+> "O SFX Finder não pode ser aberto" / "A Apple não pôde verificar…"
+  1. Tente abrir o app uma vez e clique em OK.
+  2. Vá em Ajustes do Sistema > Privacidade e Segurança.
+  3. No fim da página, clique em "Abrir Mesmo Assim" e confirme com a senha.
+
+> "O SFX Finder está danificado e não pode ser aberto"
+  Não está danificado: é o bloqueio do macOS para arquivos baixados.
+  1. Copie o app para Aplicativos.
+  2. Abra o Terminal (Aplicativos > Utilitários > Terminal), cole e aperte Enter:
+       xattr -cr "/Applications/SFX Finder.app"
+  3. Abra o app de novo.
+
+> O app não abre ou fecha sozinho
+  Confira se baixou o .dmg certo (aarch64 para chip Apple, x64 para Intel).
+
+
+INSTALAR NO WINDOWS
+> "O Windows protegeu o computador" (SmartScreen)
+  Clique em "Mais informações" e depois em "Executar assim mesmo".
+
+> O navegador bloqueia o download
+  Nos downloads, clique nos três pontinhos ao lado do arquivo e escolha "Manter".
+
+
+BAIXANDO DO GOOGLE DRIVE
+"O Google Drive não pode verificar este arquivo quanto a vírus": é só pelo tamanho.
+Clique em "Fazer o download assim mesmo".

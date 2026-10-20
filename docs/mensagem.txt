@@ -1,0 +1,7 @@
+Fala, pessoal! 🎧
+
+Fiz um app gratuito pra achar som no banco de SFX, o *SFX Finder*. Busca em português ou inglês, toca na hora e já manda os escolhidos pra pasta do projeto (até em MXF pro Avid). Tem pra Mac e Windows.
+
+👉 [LINK]
+
+Na primeira vez que abrir, o computador vai reclamar, é normal. Tem um LEIA-ME na pasta explicando como liberar. Se testarem, me contem! 😄
