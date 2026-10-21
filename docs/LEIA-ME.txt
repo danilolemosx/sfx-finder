@@ -1,4 +1,4 @@
-SFX FINDER 0.1.0 — busca e organiza o seu banco de efeitos sonoros
+SFX FINDER 0.2.0 — busca e organiza o seu banco de efeitos sonoros
 ==================================================================
 
 O QUE É
@@ -7,13 +7,22 @@ inglês, deixa você ouvir na hora e leva os escolhidos para uma pasta temática
 copiados como estão ou convertidos (WAV, MXF do Avid, AIFF, MP3 e outros).
 Roda no computador, sem internet e sem instalar mais nada.
 
+NOVO NA 0.2: IA DENTRO DO APP
+Uma IA (Qwen, open source) vai junto no instalador e roda no seu computador, sem internet.
+Ela entende o que você pede ("som de suspense pra cena de terror", "tiro abafado",
+"portão velho rangendo") e busca do jeito que as bibliotecas nomeiam os sons. Também dá
+nomes naturais em português aos sons da cesta ("Tiro de Pistola Abafado").
+A IA abre sozinha alguns segundos depois do app; até lá (ou se desligar na engrenagem ⚙)
+a busca usa o dicionário embutido. O instalador ficou maior (uns 1,6 GB) por causa dela.
+
 
 COMO USAR
 1. Na primeira vez, escolha a pasta do seu banco de sons. O app lê tudo uma vez e guarda
    um índice (um banco de 60 mil sons leva uns 12 minutos num HD). Você já pode buscar
    enquanto ele lê. Nas próximas vezes ele abre na hora.
-2. Digite no alto o que procura: "porta batendo", "chuva forte", "door slam", "whoosh"…
-   Em português ele também busca em inglês. Para excluir uma palavra, use o menos:
+2. Digite no alto o que procura, do jeito que falaria: "porta batendo", "chuva forte no
+   telhado", "som de tensão", "door slam"… Em português ele também busca em inglês; o selo
+   ✦ IA mostra os termos que a IA usou. Para excluir uma palavra, use o menos:
    "door slam -car".
 3. Ouça: ESPAÇO toca e para, ↑ ↓ troca de som. Arraste na forma de onda grande para
    marcar só um trecho.
@@ -40,9 +49,9 @@ BOM SABER
 
 
 QUAL ARQUIVO BAIXAR
-- Mac com chip Apple (M1, M2, M3, M4): SFX.Finder_0.1.0_aarch64.dmg
-- Mac com processador Intel:          SFX.Finder_0.1.0_x64.dmg
-- Windows 10/11:                      SFX.Finder_0.1.0_x64-setup.exe
+- Mac com chip Apple (M1, M2, M3, M4): SFX.Finder_0.2.0_aarch64.dmg
+- Mac com processador Intel:          SFX.Finder_0.2.0_x64.dmg
+- Windows 10/11:                      SFX.Finder_0.2.0_x64-setup.exe
 
 Não sabe qual é o seu Mac? Menu Apple () > Sobre Este Mac.
 "Chip Apple M..." = aarch64. "Processador Intel" = x64.
